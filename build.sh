@@ -67,6 +67,20 @@ echo "🔍 Final gunicorn check..."
 which gunicorn || echo "Gunicorn location not found"
 python -c "import gunicorn; print(f'Gunicorn version: {gunicorn.__version__}')" || echo "Gunicorn import failed"
 
+# Check database adapters
+echo "🔍 Checking database adapters..."
+python -c "
+try:
+    import psycopg2
+    print('✅ psycopg2 available')
+except ImportError:
+    try:
+        import psycopg
+        print('✅ psycopg available')
+    except ImportError:
+        print('⚠️  No PostgreSQL adapter found, will use SQLite')
+"
+
 # Collect static files
 echo "🎨 Collecting static files..."
 python manage.py collectstatic --noinput --clear

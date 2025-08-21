@@ -132,8 +132,21 @@ WSGI_APPLICATION = 'team_management.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-# Use Supabase PostgreSQL in production, SQLite in development
-if config('SUPABASE_HOST', default=None) or config('DATABASE_URL', default=None):
+# Check if psycopg2 is available for PostgreSQL
+def can_use_postgresql():
+    try:
+        import psycopg2
+        return True
+    except ImportError:
+        try:
+            import psycopg
+            return True
+        except ImportError:
+            return False
+
+# Use Supabase PostgreSQL if available and psycopg2 is installed
+if (config('SUPABASE_HOST', default=None) or config('DATABASE_URL', default=None)) and can_use_postgresql():
+    print("✅ Using PostgreSQL database with Supabase")
     # Use individual Supabase environment variables (preferred method)
     DATABASES = {
         'default': {
@@ -151,7 +164,12 @@ if config('SUPABASE_HOST', default=None) or config('DATABASE_URL', default=None)
         }
     }
 else:
-    # Fallback to SQLite for local development
+    # Fallback to SQLite for local development or when psycopg2 is not available
+    if config('SUPABASE_HOST', default=None):
+        print("⚠️  Supabase configured but psycopg2 not available, falling back to SQLite")
+    else:
+        print("ℹ️  Using SQLite database for development")
+    
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',

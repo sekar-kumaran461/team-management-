@@ -26,4 +26,21 @@ fi
 echo "🔍 Testing Django..."
 python manage.py check --deploy || echo "Django check failed"
 
+# Test database configuration
+echo "🔍 Testing database configuration..."
+python -c "
+import os
+import sys
+sys.path.append('/opt/render/project/src')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'team_management.settings')
+import django
+django.setup()
+from django.conf import settings
+print(f'Database engine: {settings.DATABASES[\"default\"][\"ENGINE\"]}')
+if 'postgresql' in settings.DATABASES['default']['ENGINE']:
+    print('✅ PostgreSQL configured')
+else:
+    print('ℹ️  SQLite configured')
+" || echo "Database configuration test failed"
+
 echo "🔍 Verification complete"
