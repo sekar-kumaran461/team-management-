@@ -1,20 +1,29 @@
+# Compatible versions for Python 3.11.6
 Django==4.2.7
 djangorestframework==3.14.0
 django-cors-headers==4.3.1
 Pillow==9.5.0
 python-decouple==3.8
-google-api-python-client==2.84.0
-google-auth-httplib2==0.1.0
-google-auth-oauthlib==1.0.0
-gspread==5.9.0
-gspread-django==3.0.6
-celery==5.2.7
-redis==4.6.0
-django-celery-beat==2.5.0
-django-allauth==0.54.0
-openpyxl==3.1.2
-pandas==2.0.3
-psycopg2-binary==2.9.7
-whitenoise==6.5.0
 gunicorn==20.1.0
+whitenoise==6.5.0
+psycopg2-binary==2.9.6
 dj-database-url==2.1.0
+
+# Google Integration (optional - install after basic deployment works)
+# google-api-python-client==2.84.0
+# google-auth-httplib2==0.1.0
+# google-auth-oauthlib==1.0.0
+# gspread==5.9.0
+# gspread-django==3.0.6
+
+# Background tasks (optional)
+# celery==5.2.7
+# redis==4.6.0
+# django-celery-beat==2.5.0
+
+# Authentication (optional)
+# django-allauth==0.54.0
+
+# Data processing (optional)
+# openpyxl==3.1.2
+# pandas==2.0.3

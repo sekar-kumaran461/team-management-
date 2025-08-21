@@ -2,8 +2,9 @@ services:
   - type: web
     name: team-management
     env: python
-    buildCommand: "./build.sh"
-    startCommand: "gunicorn team_management.wsgi:application --bind 0.0.0.0:$PORT"
+    runtime: python-3.11.6
+    buildCommand: "./build-emergency.sh"
+    startCommand: "gunicorn team_management.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --timeout 120"
     plan: free
     envVars:
       - key: DEBUG
@@ -13,7 +14,7 @@ services:
       - key: ALLOWED_HOSTS
         value: "*"
       - key: DATABASE_URL
-        value: postgresql://postgres.xvwwawadfeqnrwmozeai:[YOUR-SUPABASE-PASSWORD]@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres
+        value: postgresql://postgres.xvwwawadfeqnrwmozeai:Vif2025team$@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres
       - key: SUPABASE_HOST
         value: aws-1-ap-southeast-1.pooler.supabase.com
       - key: SUPABASE_PORT
@@ -23,11 +24,11 @@ services:
       - key: SUPABASE_USER
         value: postgres.xvwwawadfeqnrwmozeai
       - key: SUPABASE_PASSWORD
-        value: "[YOUR-SUPABASE-PASSWORD]"
+        value: "Vif2025team$"
       - key: SUPABASE_POOL_MODE
         value: transaction
       - key: PYTHON_VERSION
-        value: "3.11.5"
+        value: "3.11.6"
       - key: DISABLE_COLLECTSTATIC
         value: "0"
 

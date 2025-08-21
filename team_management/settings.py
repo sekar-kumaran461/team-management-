@@ -38,6 +38,7 @@ if 'RENDER' in os.environ:
 
 # Application definition
 
+# Core Django apps
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -47,24 +48,45 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sites',
     
-    # Third party apps
-    'rest_framework',
-    'corsheaders',
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',
-    
-    # Google Integration
-    'google_integration',
-    
-    # Local apps
+    # Local apps (always available)
     'users.apps.UsersConfig',
     'tasks.apps.TasksConfig',
     'resources.apps.ResourcesConfig',
     'projects.apps.ProjectsConfig',
     'analytics.apps.AnalyticsConfig',
 ]
+
+# Optional third party apps - only add if available
+try:
+    import rest_framework
+    INSTALLED_APPS.append('rest_framework')
+except ImportError:
+    pass
+
+try:
+    import corsheaders
+    INSTALLED_APPS.append('corsheaders')
+except ImportError:
+    pass
+
+try:
+    import allauth
+    INSTALLED_APPS.extend([
+        'allauth',
+        'allauth.account',
+        'allauth.socialaccount',
+        'allauth.socialaccount.providers.google',
+    ])
+except ImportError:
+    pass
+
+# Optional local apps
+try:
+    # Google Integration
+    import google_integration
+    INSTALLED_APPS.append('google_integration')
+except ImportError:
+    pass
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
