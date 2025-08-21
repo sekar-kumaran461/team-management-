@@ -1,0 +1,17 @@
+# Emergency minimal requirements for Django Team Management
+# Core Django
+Django==4.2.7
+gunicorn==20.1.0
+whitenoise==6.5.0
+python-decouple==3.8
+
+# Database
+psycopg2-binary==2.9.6
+dj-database-url==2.1.0
+
+# Authentication
+django-allauth==0.54.0
+
+# API
+djangorestframework==3.14.0
+django-cors-headers==4.3.1
