@@ -40,7 +40,7 @@ else
     echo "⚠️  Full requirements failed, trying SQLite fallback..."
     
     # Install minimal requirements for SQLite
-    if pip install Django==4.2.7 gunicorn==20.1.0 whitenoise==6.5.0 python-decouple==3.8 dj-database-url==2.1.0; then
+    if pip install Django==4.2.7 gunicorn==20.1.0 whitenoise==6.5.0 python-decouple==3.8 dj-database-url==2.1.0 django-allauth==0.54.0; then
         echo "✅ SQLite requirements installed successfully"
         DB_TYPE="sqlite"
     else

@@ -34,9 +34,15 @@ def serve_sample_file(request, filename):
         )
     raise Http404("File not found")
 
+# Check if allauth is available
+try:
+    import allauth
+    ALLAUTH_AVAILABLE = True
+except ImportError:
+    ALLAUTH_AVAILABLE = False
+
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('accounts/', include('allauth.urls')),
     path('', include('users.urls')),
     
     path('tasks/', include('tasks.urls')),
@@ -49,6 +55,12 @@ urlpatterns = [
     path('sample_tasks_import.csv', serve_sample_file, {'filename': 'sample_tasks_import.csv'}, name='sample-csv'),
     path('sample_tasks_import.htm', serve_sample_file, {'filename': 'sample_tasks_import.htm'}, name='sample-html'),
 ]
+
+# Add allauth URLs if available
+if ALLAUTH_AVAILABLE:
+    urlpatterns.insert(1, path('accounts/', include('allauth.urls')))
+else:
+    print("Warning: django-allauth not available, skipping social authentication URLs")
 
 # Serve media files in development
 if settings.DEBUG:
