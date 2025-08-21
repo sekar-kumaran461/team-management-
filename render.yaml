@@ -3,7 +3,7 @@ services:
     name: team-management
     env: python
     runtime: python-3.11.6
-    buildCommand: "./build-emergency.sh"
+    buildCommand: "./build.sh"
     startCommand: "gunicorn team_management.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --timeout 120"
     plan: free
     envVars:
@@ -29,5 +29,9 @@ services:
         value: "3.11.6"
       - key: DISABLE_COLLECTSTATIC
         value: "0"
+      - key: PIP_NO_CACHE_DIR
+        value: "1"
+      - key: PYTHONUNBUFFERED
+        value: "1"
 
 # Note: No separate PostgreSQL service needed since we're using Supabase
