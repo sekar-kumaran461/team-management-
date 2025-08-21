@@ -22,7 +22,7 @@ dj-database-url==2.1.0
 # django-celery-beat==2.5.0
 
 # Authentication (optional)
-# django-allauth==0.54.0
+django-allauth==0.54.0
 
 # Data processing (optional)
 # openpyxl==3.1.2
