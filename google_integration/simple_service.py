@@ -4,13 +4,30 @@ Simple service that uses one Google account as database backend
 """
 import os
 import json
-from google.oauth2.service_account import Credentials as ServiceAccountCredentials
-from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
 from django.conf import settings
 import logging
 
 logger = logging.getLogger(__name__)
+
+# Check if Google libraries are available
+try:
+    from google.oauth2.service_account import Credentials as ServiceAccountCredentials
+    from googleapiclient.discovery import build
+    from googleapiclient.errors import HttpError
+    GOOGLE_LIBS_AVAILABLE = True
+except ImportError:
+    GOOGLE_LIBS_AVAILABLE = False
+    # Create dummy classes for when Google libraries aren't available
+    class ServiceAccountCredentials:
+        @classmethod
+        def from_service_account_info(cls, info, scopes=None):
+            return cls()
+    
+    def build(service, version, credentials=None):
+        return None
+    
+    class HttpError(Exception):
+        pass
 
 class GoogleDatabaseService:
     """Single Google Account Database Service"""
@@ -21,9 +38,14 @@ class GoogleDatabaseService:
         self.sheets_service = None
         self.authenticated = False
         self.spreadsheet_id = getattr(settings, 'GOOGLE_DATABASE_SPREADSHEET_ID', None)
+        self.available = GOOGLE_LIBS_AVAILABLE
         
     def authenticate(self):
         """Authenticate using service account (one account for all users)"""
+        if not self.available:
+            logger.warning("Google libraries not available, skipping authentication")
+            return False
+            
         try:
             # Get credentials from environment or file
             credentials_json = os.environ.get('GOOGLE_SERVICE_ACCOUNT_JSON')
@@ -66,6 +88,9 @@ class GoogleDatabaseService:
     
     def ensure_authenticated(self):
         """Ensure service is authenticated"""
+        if not self.available:
+            logger.warning("Google libraries not available")
+            return False
         if not self.authenticated:
             return self.authenticate()
         return True

@@ -41,6 +41,15 @@ try:
 except ImportError:
     ALLAUTH_AVAILABLE = False
 
+# Check if Google integration is available
+try:
+    import google_integration
+    # Also check if Google libraries are available
+    from google.oauth2.service_account import Credentials
+    GOOGLE_INTEGRATION_AVAILABLE = True
+except ImportError:
+    GOOGLE_INTEGRATION_AVAILABLE = False
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('users.urls')),
@@ -49,12 +58,17 @@ urlpatterns = [
     path('resources/', include('resources.urls')),
     path('projects/', include('projects.urls')),
     path('analytics/', include('analytics.urls')),
-    path('google/', include('google_integration.simple_urls')),
     
     # Sample files for download
     path('sample_tasks_import.csv', serve_sample_file, {'filename': 'sample_tasks_import.csv'}, name='sample-csv'),
     path('sample_tasks_import.htm', serve_sample_file, {'filename': 'sample_tasks_import.htm'}, name='sample-html'),
 ]
+
+# Add Google integration URLs if available
+if GOOGLE_INTEGRATION_AVAILABLE:
+    urlpatterns.insert(-2, path('google/', include('google_integration.simple_urls')))
+else:
+    print("Warning: Google integration not available, skipping Google URLs")
 
 # Add allauth URLs if available
 if ALLAUTH_AVAILABLE:

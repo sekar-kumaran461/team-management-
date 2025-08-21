@@ -60,6 +60,9 @@ fi
 echo "📦 Installing optional data processing packages..."
 pip install pandas==2.0.3 openpyxl==3.1.2 || echo "⚠️  Data processing packages failed, continuing without them"
 
+echo "📦 Installing optional Google integration packages..."
+pip install google-api-python-client==2.100.0 google-auth==2.23.0 google-auth-oauthlib==1.0.0 google-auth-httplib2==0.1.0 || echo "⚠️  Google API packages failed, continuing without them"
+
 echo "✅ Package installation completed"
 
 # =============================================================================
@@ -75,7 +78,7 @@ critical_packages = [
     'psycopg2', 'allauth', 'rest_framework', 'corsheaders'
 ]
 
-optional_packages = ['PIL', 'pandas', 'openpyxl']
+optional_packages = ['PIL', 'pandas', 'openpyxl', 'google']
 
 print('Checking critical packages:')
 missing_critical = []
