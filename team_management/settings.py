@@ -116,7 +116,9 @@ except ImportError:
 try:
     import allauth
     MIDDLEWARE.insert(-2, 'allauth.account.middleware.AccountMiddleware')
+    print("✅ Added allauth middleware")
 except ImportError:
+    print("⚠️  django-allauth not available, skipping allauth middleware")
     pass
 
 ROOT_URLCONF = 'team_management.urls'
@@ -143,22 +145,9 @@ WSGI_APPLICATION = 'team_management.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-# Check if psycopg2 is available for PostgreSQL
-def can_use_postgresql():
-    try:
-        import psycopg2
-        return True
-    except ImportError:
-        try:
-            import psycopg
-            return True
-        except ImportError:
-            return False
-
-# Use Supabase PostgreSQL if available and psycopg2 is installed
-if (config('SUPABASE_HOST', default=None) or config('DATABASE_URL', default=None)) and can_use_postgresql():
-    print("✅ Using PostgreSQL database with Supabase")
-    # Use individual Supabase environment variables (preferred method)
+# Always try PostgreSQL first when Supabase environment variables are present
+if config('SUPABASE_HOST', default=None):
+    print("🗄️  Configuring PostgreSQL database with Supabase")
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -175,12 +164,8 @@ if (config('SUPABASE_HOST', default=None) or config('DATABASE_URL', default=None
         }
     }
 else:
-    # Fallback to SQLite for local development or when psycopg2 is not available
-    if config('SUPABASE_HOST', default=None):
-        print("⚠️  Supabase configured but psycopg2 not available, falling back to SQLite")
-    else:
-        print("ℹ️  Using SQLite database for development")
-    
+    # Fallback to SQLite for local development only
+    print("ℹ️  Using SQLite database for local development")
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',

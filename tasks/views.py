@@ -87,7 +87,17 @@ from .models import (
 from .forms import TaskCreateForm, TaskFileUploadForm, TaskSubmissionForm
 from users.models import User
 from analytics.models import UserActivity
-from google_integration.services import GoogleDriveService
+
+# Try to import Google integration, but don't fail if not available
+try:
+    from google_integration.services import GoogleDriveService
+    HAS_GOOGLE_INTEGRATION = True
+except ImportError:
+    HAS_GOOGLE_INTEGRATION = False
+    class GoogleDriveService:
+        """Dummy class when Google integration is not available"""
+        def __init__(self):
+            pass
 
 
 class TaskListView(LoginRequiredMixin, ListView):
