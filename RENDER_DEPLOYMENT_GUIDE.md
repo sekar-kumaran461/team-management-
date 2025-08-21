@@ -37,15 +37,16 @@ Add these environment variables in the Render dashboard:
 DEBUG=False
 SECRET_KEY=[Generate a new secret key - Render can auto-generate this]
 ALLOWED_HOSTS=*
-DATABASE_URL=postgresql://postgres.xvwwawadfeqnrwmozeai:[YOUR-SUPABASE-PASSWORD]@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres
 SUPABASE_HOST=aws-1-ap-southeast-1.pooler.supabase.com
 SUPABASE_PORT=6543
 SUPABASE_DATABASE=postgres
 SUPABASE_USER=postgres.xvwwawadfeqnrwmozeai
-SUPABASE_PASSWORD=[YOUR-SUPABASE-PASSWORD]
-PYTHON_VERSION=3.11.5
+SUPABASE_PASSWORD=Vif2025team$
+PYTHON_VERSION=3.11.6
 DISABLE_COLLECTSTATIC=0
 ```
+
+**Note**: We're using individual Supabase environment variables instead of DATABASE_URL to avoid parsing issues.
 
 #### If Build Fails - Use Minimal Setup:
 If you encounter build errors, try these alternatives:

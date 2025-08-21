@@ -126,31 +126,25 @@ WSGI_APPLICATION = 'team_management.wsgi.application'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 # Use Supabase PostgreSQL in production, SQLite in development
-if config('DATABASE_URL', default=None):
+if config('SUPABASE_HOST', default=None) or config('DATABASE_URL', default=None):
+    # Use individual Supabase environment variables (preferred method)
     DATABASES = {
-        'default': dj_database_url.parse(
-            config('DATABASE_URL'),
-            conn_max_age=600,
-            conn_health_checks=True,
-        )
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': config('SUPABASE_DATABASE', default='postgres'),
+            'USER': config('SUPABASE_USER', default='postgres.xvwwawadfeqnrwmozeai'),
+            'PASSWORD': config('SUPABASE_PASSWORD', default='Vif2025team$'),
+            'HOST': config('SUPABASE_HOST', default='aws-1-ap-southeast-1.pooler.supabase.com'),
+            'PORT': config('SUPABASE_PORT', default='6543', cast=int),
+            'OPTIONS': {
+                'sslmode': 'require',
+            },
+            'CONN_MAX_AGE': 600,
+            'CONN_HEALTH_CHECKS': True,
+        }
     }
-    # Add Supabase-specific connection options
-    DATABASES['default']['OPTIONS'] = {
-        'sslmode': 'require',
-        'options': '-c default_transaction_isolation=serializable'
-    }
-    # Override individual settings if provided
-    if config('SUPABASE_HOST', default=None):
-        DATABASES['default']['HOST'] = config('SUPABASE_HOST')
-    if config('SUPABASE_PORT', default=None):
-        DATABASES['default']['PORT'] = config('SUPABASE_PORT', cast=int)
-    if config('SUPABASE_DATABASE', default=None):
-        DATABASES['default']['NAME'] = config('SUPABASE_DATABASE')
-    if config('SUPABASE_USER', default=None):
-        DATABASES['default']['USER'] = config('SUPABASE_USER')
-    if config('SUPABASE_PASSWORD', default=None):
-        DATABASES['default']['PASSWORD'] = config('SUPABASE_PASSWORD')
 else:
+    # Fallback to SQLite for local development
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',

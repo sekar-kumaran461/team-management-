@@ -13,8 +13,6 @@ services:
         generateValue: true
       - key: ALLOWED_HOSTS
         value: "*"
-      - key: DATABASE_URL
-        value: postgresql://postgres.xvwwawadfeqnrwmozeai:Vif2025team$@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres
       - key: SUPABASE_HOST
         value: aws-1-ap-southeast-1.pooler.supabase.com
       - key: SUPABASE_PORT

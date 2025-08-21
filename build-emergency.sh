@@ -4,12 +4,9 @@ set -o errexit
 
 echo "=== EMERGENCY DEPLOYMENT SCRIPT ==="
 
-# Force Python version
-export PYTHON_VERSION=3.11.6
-
-# Upgrade pip first
-echo "Upgrading pip..."
-python3.11 -m pip install --upgrade pip || python -m pip install --upgrade pip
+# Force Python version and upgrade pip
+echo "Setting up Python environment..."
+python -m pip install --upgrade pip
 
 # Install only essential packages one by one to catch errors
 echo "Installing Django..."
@@ -27,14 +24,14 @@ pip install psycopg2-binary==2.9.6
 echo "Installing decouple..."
 pip install python-decouple==3.8
 
-echo "Installing dj-database-url..."
-pip install dj-database-url==2.1.0
+# Skip problematic packages for now
+echo "Skipping dj-database-url to avoid parsing issues..."
 
 # Skip CSS build entirely
 echo "Skipping CSS build..."
 
-# Create minimal static directories
-mkdir -p static/css
+# Create minimal static directories and files
+mkdir -p static/css static/js static/admin
 echo "/* Minimal CSS */" > static/css/output.css
 
 # Collect static files
