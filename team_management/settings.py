@@ -181,15 +181,12 @@ AUTHENTICATION_BACKENDS = [
 
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
+
+# Updated Django Allauth settings (no deprecation warnings)
 ACCOUNT_LOGIN_METHODS = {'email'}
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*']
 ACCOUNT_SESSION_REMEMBER = True
-
-# Additional allauth settings
 ACCOUNT_EMAIL_VERIFICATION = 'none'  # Changed to none for development
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
-ACCOUNT_USERNAME_REQUIRED = False
 
 # Social account settings
 SOCIALACCOUNT_PROVIDERS = {

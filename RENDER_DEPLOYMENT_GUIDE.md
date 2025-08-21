@@ -36,9 +36,17 @@ Add these environment variables in the Render dashboard:
 ```
 DEBUG=False
 SECRET_KEY=[Generate a new secret key - Render can auto-generate this]
-ALLOWED_HOSTS=your-app-name.onrender.com
+ALLOWED_HOSTS=*
 DATABASE_URL=[This will be automatically set when you add a database]
+PYTHON_VERSION=3.11.5
+DISABLE_COLLECTSTATIC=0
 ```
+
+#### If Build Fails - Use Minimal Setup:
+If you encounter build errors, try these alternatives:
+1. **Use minimal requirements**: Change build command to `./build-minimal.sh`
+2. **Use minimal requirements.txt**: Rename `requirements-minimal.txt` to `requirements.txt`
+3. **Skip Node.js**: Remove or rename `package.json` temporarily
 
 #### Optional Variables (for full functionality):
 ```

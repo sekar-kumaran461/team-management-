@@ -3,7 +3,7 @@ services:
     name: team-management
     env: python
     buildCommand: "./build.sh"
-    startCommand: "gunicorn team_management.wsgi:application"
+    startCommand: "gunicorn team_management.wsgi:application --bind 0.0.0.0:$PORT"
     plan: free
     envVars:
       - key: DEBUG
@@ -17,7 +17,9 @@ services:
           name: team-management-db
           property: connectionString
       - key: PYTHON_VERSION
-        value: "3.11.9"
+        value: "3.11.5"
+      - key: DISABLE_COLLECTSTATIC
+        value: "0"
 
   - type: postgres
     name: team-management-db
