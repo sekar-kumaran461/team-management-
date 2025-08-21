@@ -31,7 +31,7 @@ echo "Skipping dj-database-url to avoid parsing issues..."
 echo "Skipping CSS build..."
 
 # Create minimal static directories and files
-mkdir -p static/css static/js static/admin
+mkdir -p static/css static/js static/admin logs media
 echo "/* Minimal CSS */" > static/css/output.css
 
 # Collect static files

@@ -22,7 +22,7 @@ pip install --only-binary=all psycopg2-binary==2.9.4 || \
 echo "psycopg2 installation deferred"
 
 # Create basic static files
-mkdir -p static/css static/js
+mkdir -p static/css static/js logs media
 echo "/* Basic CSS */" > static/css/output.css
 
 # Django operations

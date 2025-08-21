@@ -11,8 +11,10 @@ python -m pip install --upgrade pip
 echo "Installing minimal Python dependencies..."
 pip install -r requirements-minimal.txt
 
+# Create necessary directories
+mkdir -p static/css logs media
+
 # Create basic CSS if needed
-mkdir -p static/css
 if [ ! -f "static/css/output.css" ]; then
     echo "Creating basic CSS file..."
     echo "/* Basic styles */" > static/css/output.css
