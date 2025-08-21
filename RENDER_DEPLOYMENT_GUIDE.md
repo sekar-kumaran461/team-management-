@@ -37,7 +37,12 @@ Add these environment variables in the Render dashboard:
 DEBUG=False
 SECRET_KEY=[Generate a new secret key - Render can auto-generate this]
 ALLOWED_HOSTS=*
-DATABASE_URL=[This will be automatically set when you add a database]
+DATABASE_URL=postgresql://postgres.xvwwawadfeqnrwmozeai:[YOUR-SUPABASE-PASSWORD]@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres
+SUPABASE_HOST=aws-1-ap-southeast-1.pooler.supabase.com
+SUPABASE_PORT=6543
+SUPABASE_DATABASE=postgres
+SUPABASE_USER=postgres.xvwwawadfeqnrwmozeai
+SUPABASE_PASSWORD=[YOUR-SUPABASE-PASSWORD]
 PYTHON_VERSION=3.11.5
 DISABLE_COLLECTSTATIC=0
 ```
@@ -71,17 +76,16 @@ CELERY_BROKER_URL=redis://your-redis-url
 CELERY_RESULT_BACKEND=redis://your-redis-url
 ```
 
-## Step 4: Add a PostgreSQL Database
+## Step 4: Configure Environment Variables (Using Supabase)
 
-1. In Render dashboard, click "New +" and select "PostgreSQL"
-2. Configure the database:
-   - **Name**: `team-management-db`
-   - **Database Name**: `team_management`
-   - **User**: `team_management_user`
-   - **Plan**: `Free` (for testing)
+Since you're using Supabase as your database, you don't need to create a separate PostgreSQL service on Render. Instead:
 
-3. Once created, copy the "External Database URL"
-4. Add it as `DATABASE_URL` environment variable in your web service
+1. In Render dashboard, go to your web service
+2. Go to "Environment" tab
+3. Add the Supabase environment variables listed above
+4. Make sure to replace `[YOUR-SUPABASE-PASSWORD]` with your actual Supabase password
+
+**Note**: You can find your Supabase password in your Supabase dashboard under Settings → Database → Connection string.
 
 ## Step 5: Deploy
 

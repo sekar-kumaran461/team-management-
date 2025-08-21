@@ -103,11 +103,31 @@ WSGI_APPLICATION = 'team_management.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-# Use PostgreSQL in production, SQLite in development
+# Use Supabase PostgreSQL in production, SQLite in development
 if config('DATABASE_URL', default=None):
     DATABASES = {
-        'default': dj_database_url.parse(config('DATABASE_URL'))
+        'default': dj_database_url.parse(
+            config('DATABASE_URL'),
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
+    # Add Supabase-specific connection options
+    DATABASES['default']['OPTIONS'] = {
+        'sslmode': 'require',
+        'options': '-c default_transaction_isolation=serializable'
+    }
+    # Override individual settings if provided
+    if config('SUPABASE_HOST', default=None):
+        DATABASES['default']['HOST'] = config('SUPABASE_HOST')
+    if config('SUPABASE_PORT', default=None):
+        DATABASES['default']['PORT'] = config('SUPABASE_PORT', cast=int)
+    if config('SUPABASE_DATABASE', default=None):
+        DATABASES['default']['NAME'] = config('SUPABASE_DATABASE')
+    if config('SUPABASE_USER', default=None):
+        DATABASES['default']['USER'] = config('SUPABASE_USER')
+    if config('SUPABASE_PASSWORD', default=None):
+        DATABASES['default']['PASSWORD'] = config('SUPABASE_PASSWORD')
 else:
     DATABASES = {
         'default': {
