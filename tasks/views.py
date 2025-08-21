@@ -54,7 +54,11 @@ def task_submissions_admin(request):
     })
 import json
 import csv
-import pandas as pd
+try:
+    import pandas as pd
+    HAS_PANDAS = True
+except ImportError:
+    HAS_PANDAS = False
 from datetime import datetime, timedelta
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -758,6 +762,8 @@ class BulkTaskUploadView(LoginRequiredMixin, CreateView):
 
     def read_excel_file(self, file):
         """Read Excel file and return task data"""
+        if not HAS_PANDAS:
+            raise ValueError("Excel files require pandas. Please install pandas or use CSV format.")
         file.seek(0)
         df = pd.read_excel(file)
         return df.to_dict('records')

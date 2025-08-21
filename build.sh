@@ -39,13 +39,20 @@ if pip install -r requirements.txt; then
 else
     echo "⚠️  Full requirements failed, trying SQLite fallback..."
     
-    # Install minimal requirements for SQLite
-    if pip install Django==4.2.7 gunicorn==20.1.0 whitenoise==6.5.0 python-decouple==3.8 dj-database-url==2.1.0 django-allauth==0.54.0; then
+    # Install minimal requirements for SQLite (comprehensive package set)
+    if pip install Django==4.2.7 gunicorn==20.1.0 whitenoise==6.5.0 python-decouple==3.8 dj-database-url==2.1.0 django-allauth==0.54.0 djangorestframework==3.14.0 django-cors-headers==4.3.1 Pillow==9.5.0 pandas==2.0.3 openpyxl==3.1.2; then
         echo "✅ SQLite requirements installed successfully"
         DB_TYPE="sqlite"
     else
-        echo "❌ Even minimal requirements failed"
-        exit 1
+        echo "❌ Even minimal requirements failed, trying ultra-minimal..."
+        # Try without optional packages
+        if pip install Django==4.2.7 gunicorn==20.1.0 whitenoise==6.5.0 python-decouple==3.8 dj-database-url==2.1.0 django-allauth==0.54.0 djangorestframework==3.14.0 Pillow==9.5.0; then
+            echo "✅ Ultra-minimal SQLite requirements installed successfully"
+            DB_TYPE="sqlite"
+        else
+            echo "❌ All installation attempts failed"
+            exit 1
+        fi
     fi
 fi
 
