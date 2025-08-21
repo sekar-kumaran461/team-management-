@@ -1,0 +1,344 @@
+{% extends 'base.html' %}
+
+{% block title %}Resources - TeamLearn{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Page Header -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Learning Resources</h1>
+                <p class="text-gray-600">Share and access learning materials, code snippets, and helpful links</p>
+            </div>
+            <div class="flex space-x-3">
+                <a href="{% url 'resources:resource-upload' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                    <i class="fas fa-plus mr-2"></i>
+                    Add Resource
+                </a>
+                <a href="{% url 'resources:category-list' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    <i class="fas fa-folder mr-2"></i>
+                    Categories
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resource Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-file-alt text-blue-600"></i>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-lg font-medium text-gray-900">Total Resources</h3>
+                    <div class="text-2xl font-bold text-gray-900">{{ total_resources|default:0 }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-download text-green-600"></i>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-lg font-medium text-gray-900">Downloads</h3>
+                    <div class="text-2xl font-bold text-gray-900">{{ total_downloads|default:0 }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-users text-purple-600"></i>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-lg font-medium text-gray-900">Contributors</h3>
+                    <div class="text-2xl font-bold text-gray-900">{{ total_contributors|default:0 }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-folder text-yellow-600"></i>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-lg font-medium text-gray-900">Categories</h3>
+                    <div class="text-2xl font-bold text-gray-900">{{ total_categories|default:0 }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <form method="GET" class="flex flex-wrap gap-4 items-center">
+            <div class="flex-1 min-w-64">
+                <input type="text" name="search" value="{{ request.GET.search }}" placeholder="Search resources..." 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+            <div>
+                <select name="resource_type" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">All Types</option>
+                    <option value="document" {% if request.GET.resource_type == 'document' %}selected{% endif %}>Document</option>
+                    <option value="video" {% if request.GET.resource_type == 'video' %}selected{% endif %}>Video</option>
+                    <option value="link" {% if request.GET.resource_type == 'link' %}selected{% endif %}>Link</option>
+                    <option value="code" {% if request.GET.resource_type == 'code' %}selected{% endif %}>Code</option>
+                    <option value="presentation" {% if request.GET.resource_type == 'presentation' %}selected{% endif %}>Presentation</option>
+                    <option value="book" {% if request.GET.resource_type == 'book' %}selected{% endif %}>Book</option>
+                    <option value="tool" {% if request.GET.resource_type == 'tool' %}selected{% endif %}>Tool</option>
+                    <option value="other" {% if request.GET.resource_type == 'other' %}selected{% endif %}>Other</option>
+                </select>
+            </div>
+            <div>
+                <select name="category" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">All Categories</option>
+                    {% for category in categories %}
+                    <option value="{{ category.slug }}" {% if request.GET.category == category.slug %}selected{% endif %}>{{ category.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <select name="sort" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <option value="-created_at" {% if request.GET.sort == '-created_at' %}selected{% endif %}>Newest First</option>
+                    <option value="created_at" {% if request.GET.sort == 'created_at' %}selected{% endif %}>Oldest First</option>
+                    <option value="-download_count" {% if request.GET.sort == '-download_count' %}selected{% endif %}>Most Downloaded</option>
+                    <option value="title" {% if request.GET.sort == 'title' %}selected{% endif %}>Title A-Z</option>
+                    <option value="-title" {% if request.GET.sort == '-title' %}selected{% endif %}>Title Z-A</option>
+                </select>
+            </div>
+            <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                <i class="fas fa-search mr-2"></i>
+                Search
+            </button>
+        </form>
+    </div>
+
+    <!-- Quick Categories -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h2 class="text-lg font-medium text-gray-900 mb-4">Quick Access</h2>
+        <div class="flex flex-wrap gap-3">
+            {% for category in popular_categories %}
+            <a href="?category={{ category.slug }}" class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                <i class="fas fa-{{ category.icon|default:'folder' }} mr-2"></i>
+                {{ category.name }}
+                <span class="ml-2 text-xs text-gray-500">({{ category.resource_count }})</span>
+            </a>
+            {% empty %}
+            <div class="flex flex-wrap gap-3">
+                <a href="?resource_type=code" class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    <i class="fas fa-code mr-2"></i>
+                    Code Snippets
+                </a>
+                <a href="?resource_type=video" class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    <i class="fas fa-video mr-2"></i>
+                    Video Tutorials
+                </a>
+                <a href="?resource_type=document" class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    <i class="fas fa-file-alt mr-2"></i>
+                    Documents
+                </a>
+                <a href="?resource_type=link" class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    <i class="fas fa-link mr-2"></i>
+                    Useful Links
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Resources Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for resource in resources %}
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+            <!-- Resource Header -->
+            <div class="p-6">
+                <div class="flex items-start justify-between mb-3">
+                    <div class="flex-1">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">{{ resource.title }}</h3>
+                        <p class="text-sm text-gray-600 mb-3 line-clamp-3">{{ resource.description|truncatechars:120 }}</p>
+                    </div>
+                    <div class="ml-3">
+                        {% if resource.resource_type == 'document' %}
+                            <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-file-pdf text-red-600"></i>
+                            </div>
+                        {% elif resource.resource_type == 'video' %}
+                            <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-video text-purple-600"></i>
+                            </div>
+                        {% elif resource.resource_type == 'code' %}
+                            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-code text-green-600"></i>
+                            </div>
+                        {% elif resource.resource_type == 'link' %}
+                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-link text-blue-600"></i>
+                            </div>
+                        {% else %}
+                            <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-file text-gray-600"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Resource Meta -->
+                <div class="flex items-center justify-between text-xs text-gray-500 mb-4">
+                    <div class="flex items-center space-x-3">
+                        <span class="flex items-center">
+                            <i class="fas fa-user mr-1"></i>
+                            {{ resource.uploaded_by.first_name }}
+                        </span>
+                        <span class="flex items-center">
+                            <i class="fas fa-download mr-1"></i>
+                            {{ resource.download_count }}
+                        </span>
+                        <span class="flex items-center">
+                            <i class="fas fa-calendar mr-1"></i>
+                            {{ resource.created_at|date:"M d" }}
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Tags/Categories -->
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        {{ resource.get_resource_type_display }}
+                    </span>
+                    {% if resource.category %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                        {{ resource.category }}
+                    </span>
+                    {% endif %}
+                    {% if resource.tags %}
+                    {% for tag in resource.tags.all|slice:":2" %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        #{{ tag.name }}
+                    </span>
+                    {% endfor %}
+                    {% endif %}
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="flex space-x-3">
+                    <a href="{% url 'resources:resource-detail' resource.pk %}" class="flex-1 inline-flex justify-center items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        <i class="fas fa-eye mr-2"></i>
+                        View
+                    </a>
+                    {% if resource.file_url %}
+                    <a href="{{ resource.file_url }}" target="_blank" onclick="trackDownload({{ resource.pk }})" class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                        {% if resource.resource_type == 'link' %}
+                            <i class="fas fa-external-link-alt mr-2"></i>
+                            Open
+                        {% else %}
+                            <i class="fas fa-download mr-2"></i>
+                            Download
+                        {% endif %}
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+            <i class="fas fa-folder-open text-4xl text-gray-300 mb-4"></i>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No resources found</h3>
+            <p class="text-gray-600 mb-6">
+                {% if request.GET.search or request.GET.resource_type or request.GET.category %}
+                    Try adjusting your filters or search terms.
+                {% else %}
+                    Start building your team's knowledge base by adding your first resource!
+                {% endif %}
+            </p>
+            {% if not request.GET.search %}
+            <a href="{% url 'resources:resource-upload' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                <i class="fas fa-plus mr-2"></i>
+                Add First Resource
+            </a>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <nav class="flex items-center justify-between">
+            <div class="flex-1 flex justify-between sm:hidden">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Previous
+                    </a>
+                {% endif %}
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Next
+                    </a>
+                {% endif %}
+            </div>
+            
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-gray-700">
+                        Showing <span class="font-medium">{{ page_obj.start_index }}</span> to <span class="font-medium">{{ page_obj.end_index }}</span> of <span class="font-medium">{{ page_obj.paginator.count }}</span> results
+                    </p>
+                </div>
+                <div>
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                        {% if page_obj.has_previous %}
+                            <a href="?page={{ page_obj.previous_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        {% endif %}
+                        
+                        {% for page_num in page_obj.paginator.page_range %}
+                            {% if page_num == page_obj.number %}
+                                <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-blue-50 text-sm font-medium text-blue-600">
+                                    {{ page_num }}
+                                </span>
+                            {% else %}
+                                <a href="?page={{ page_num }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                    {{ page_num }}
+                                </a>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        {% endif %}
+                    </nav>
+                </div>
+            </div>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function trackDownload(resourceId) {
+    // Track download analytics
+    fetch(`/api/resources/${resourceId}/track-download/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+    }).catch(console.error);
+}
+</script>
+{% endblock %}

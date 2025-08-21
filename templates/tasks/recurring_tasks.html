@@ -1,0 +1,215 @@
+{% extends 'base.html' %}
+{% load dict_filters %}
+
+{% block title %}Recurring Tasks - TeamLearn{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+            <div class="flex items-start justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900 mb-2 flex items-center">
+                        <i class="fas fa-sync-alt text-blue-600 mr-3"></i>
+                        Choose Your Recurring Tasks
+                    </h1>
+                    <p class="text-gray-600">Select daily and weekly tasks that will be automatically assigned to you</p>
+                </div>
+                
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'tasks:task-list' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Back to Tasks
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        {% if available_templates %}
+        <!-- Instructions -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-info-circle text-blue-500"></i>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-blue-800">How Recurring Tasks Work</h3>
+                    <div class="mt-2 text-sm text-blue-700">
+                        <ul class="list-disc pl-5 space-y-1">
+                            <li><strong>Daily Tasks:</strong> Automatically created every day you select them</li>
+                            <li><strong>Weekly Tasks:</strong> Created on specific days of the week you choose</li>
+                            <li><strong>Flexible:</strong> You can enable/disable any task at any time</li>
+                            <li><strong>Individual:</strong> Each task instance is separate - completing one doesn't affect others</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Available Recurring Tasks -->
+        <div class="space-y-6">
+            {% for template in available_templates %}
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex-1">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ template.title }}</h3>
+                        <p class="text-gray-600 mb-3">{{ template.description|truncatewords:30 }}</p>
+                        
+                        <div class="flex items-center space-x-4 text-sm text-gray-500">
+                            <span class="inline-flex items-center">
+                                <i class="fas fa-clock mr-1"></i>
+                                {{ template.estimated_hours }}h estimated
+                            </span>
+                            <span class="inline-flex items-center">
+                                <i class="fas fa-star mr-1"></i>
+                                {{ template.points_value }} points
+                            </span>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium 
+                                {% if template.difficulty == 'easy' %}bg-green-100 text-green-800
+                                {% elif template.difficulty == 'medium' %}bg-yellow-100 text-yellow-800
+                                {% elif template.difficulty == 'hard' %}bg-orange-100 text-orange-800
+                                {% else %}bg-red-100 text-red-800{% endif %}">
+                                {{ template.get_difficulty_display }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Selection Options -->
+                <div class="border-t border-gray-200 pt-4">
+                    {% if template.recurrence_type == 'daily' or template.recurrence_type == 'both' %}
+                    <!-- Daily Selection -->
+                    <div class="mb-4">
+                        <h4 class="text-sm font-medium text-gray-900 mb-2">Daily Task</h4>
+                        <form method="post" action="{% url 'tasks:select-recurring-task' %}" class="inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="task_id" value="{{ template.id }}">
+                            <input type="hidden" name="selection_type" value="daily">
+                            
+                            {% with daily_key=template.id|add:"_daily" %}
+                            {% if daily_key in user_selections %}
+                                <input type="hidden" name="action" value="deselect">
+                                <button type="submit" class="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded text-white bg-green-600 hover:bg-green-700">
+                                    <i class="fas fa-check mr-1"></i>
+                                    Selected Daily
+                                </button>
+                            {% else %}
+                                <input type="hidden" name="action" value="select">
+                                <button type="submit" class="inline-flex items-center px-3 py-1 border border-gray-300 text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50">
+                                    <i class="fas fa-plus mr-1"></i>
+                                    Select Daily
+                                </button>
+                            {% endif %}
+                            {% endwith %}
+                        </form>
+                    </div>
+                    {% endif %}
+
+                    {% if template.recurrence_type == 'weekly' or template.recurrence_type == 'both' %}
+                    <!-- Weekly Selection -->
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-900 mb-2">Weekly Task</h4>
+                        
+                        {% with weekly_key=template.id|add:"_weekly" %}
+                        {% if weekly_key in user_selections %}
+                        <!-- Currently Selected -->
+                        <div class="bg-green-50 border border-green-200 rounded-lg p-3 mb-3">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-green-800">Currently selected for:</p>
+                                    <p class="text-sm text-green-700">
+                                        {% with selected_days=user_selections|lookup:weekly_key %}
+                                        {% for day_code, day_name in weekdays %}
+                                            {% if day_code in selected_days.selected_days %}{{ day_name }}{% if not forloop.last %}, {% endif %}{% endif %}
+                                        {% endfor %}
+                                        {% endwith %}
+                                    </p>
+                                </div>
+                                <form method="post" action="{% url 'tasks:select-recurring-task' %}" class="inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="task_id" value="{{ template.id }}">
+                                    <input type="hidden" name="selection_type" value="weekly">
+                                    <input type="hidden" name="action" value="deselect">
+                                    <button type="submit" class="text-red-600 hover:text-red-800 text-sm">
+                                        <i class="fas fa-times mr-1"></i>Remove
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endwith %}
+
+                        <!-- Day Selection Form -->
+                        <form method="post" action="{% url 'tasks:select-recurring-task' %}" class="space-y-3">
+                            {% csrf_token %}
+                            <input type="hidden" name="task_id" value="{{ template.id }}">
+                            <input type="hidden" name="selection_type" value="weekly">
+                            <input type="hidden" name="action" value="select">
+                            
+                            <div class="grid grid-cols-7 gap-2">
+                                {% for day_code, day_name in weekdays %}
+                                <label class="flex items-center justify-center p-2 border border-gray-300 rounded text-sm cursor-pointer hover:bg-gray-50">
+                                    <input type="checkbox" name="selected_days[]" value="{{ day_code }}" class="sr-only peer">
+                                    <span class="peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 px-2 py-1 rounded border border-transparent">
+                                        {{ day_name|slice:":3" }}
+                                    </span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                            
+                            <button type="submit" class="inline-flex items-center px-3 py-1 border border-gray-300 text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50">
+                                <i class="fas fa-calendar-plus mr-1"></i>
+                                Update Weekly Selection
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% else %}
+        <!-- No Tasks Available -->
+        <div class="text-center py-12">
+            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-tasks text-gray-400 text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No Recurring Tasks Available</h3>
+            <p class="text-gray-600 mb-4">There are currently no recurring tasks available for selection.</p>
+            <p class="text-sm text-gray-500">Check back later or contact your team lead to create recurring tasks.</p>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+<style>
+/* Custom checkbox styling for day selection */
+input[type="checkbox"]:checked + span {
+    background-color: #3b82f6 !important;
+    color: white !important;
+    border-color: #3b82f6 !important;
+}
+</style>
+
+<script>
+// Add some interactivity for better UX
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit daily task forms for immediate feedback
+    const dailyForms = document.querySelectorAll('form[action*="select-recurring-task"]');
+    dailyForms.forEach(form => {
+        const selectionType = form.querySelector('input[name="selection_type"]').value;
+        if (selectionType === 'daily') {
+            form.addEventListener('submit', function() {
+                const button = form.querySelector('button[type="submit"]');
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Processing...';
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

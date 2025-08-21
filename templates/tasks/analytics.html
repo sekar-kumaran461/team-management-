@@ -1,0 +1,336 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Task Analytics - TeamLearn{% endblock %}
+
+{% block extra_css %}
+<style>
+    .metric-card {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%);
+        border-left: 4px solid #3b82f6;
+    }
+    .chart-container {
+        position: relative;
+        height: 300px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+            <div class="flex items-start justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900 mb-2 flex items-center">
+                        <i class="fas fa-chart-line text-blue-600 mr-3"></i>
+                        Task Analytics
+                    </h1>
+                    <p class="text-gray-600">Insights and performance metrics for task management</p>
+                </div>
+                
+                <!-- Date Range Filter -->
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center">
+                        <label for="date-range" class="text-sm font-medium text-gray-700 mr-2">Period:</label>
+                        <select id="date-range" onchange="updateDateRange()" 
+                                class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="7" {% if date_range == '7' %}selected{% endif %}>Last 7 days</option>
+                            <option value="30" {% if date_range == '30' %}selected{% endif %}>Last 30 days</option>
+                            <option value="90" {% if date_range == '90' %}selected{% endif %}>Last 90 days</option>
+                            <option value="365" {% if date_range == '365' %}selected{% endif %}>Last year</option>
+                        </select>
+                    </div>
+                    <span class="text-sm text-gray-500">
+                        {{ start_date|date:"M d" }} - {{ end_date|date:"M d, Y" }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Metrics -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            
+            <!-- Total Tasks -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 metric-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Total Tasks</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ task_metrics.total_tasks }}</p>
+                        <p class="text-sm text-gray-500 mt-1">
+                            +{{ task_metrics.period_tasks }} this period
+                        </p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-tasks text-blue-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Completion Rate -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 metric-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Completion Rate</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ task_metrics.completion_rate }}%</p>
+                        <p class="text-sm text-gray-500 mt-1">
+                            {{ task_metrics.completed_tasks }}/{{ task_metrics.total_tasks }} completed
+                        </p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- In Progress -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 metric-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">In Progress</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ task_metrics.in_progress_tasks }}</p>
+                        {% if task_metrics.overdue_tasks > 0 %}
+                        <p class="text-sm text-red-600 mt-1">
+                            {{ task_metrics.overdue_tasks }} overdue
+                        </p>
+                        {% else %}
+                        <p class="text-sm text-gray-500 mt-1">No overdue tasks</p>
+                        {% endif %}
+                    </div>
+                    <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-clock text-yellow-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Time Logged -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 metric-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Time Logged</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ time_metrics.total_logged_hours }}h</p>
+                        {% if time_metrics.active_timers > 0 %}
+                        <p class="text-sm text-green-600 mt-1">
+                            {{ time_metrics.active_timers }} active timers
+                        </p>
+                        {% else %}
+                        <p class="text-sm text-gray-500 mt-1">No active timers</p>
+                        {% endif %}
+                    </div>
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-stopwatch text-purple-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            
+            <!-- Task Status Distribution -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-chart-pie text-blue-600 mr-2"></i>
+                    Task Status Distribution
+                </h2>
+                <div class="chart-container">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Priority Distribution -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-flag text-red-600 mr-2"></i>
+                    Priority Distribution
+                </h2>
+                <div class="chart-container">
+                    <canvas id="priorityChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Team Performance & Recent Activity -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <!-- Team Performance -->
+            {% if can_view_team_data and team_performance.top_performers %}
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-trophy text-yellow-600 mr-2"></i>
+                    Top Performers
+                </h2>
+                
+                <div class="space-y-4">
+                    {% for performer in team_performance.top_performers %}
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm mr-3">
+                                {{ forloop.counter }}
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-900">{{ performer.get_full_name|default:performer.username }}</p>
+                                <p class="text-sm text-gray-600">{{ performer.completed_count }} tasks completed</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-sm font-medium text-gray-900">{{ performer.total_points|default:0 }} pts</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="mt-4 pt-4 border-t border-gray-200">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-medium text-gray-700">Total Team Points:</span>
+                        <span class="text-lg font-bold text-blue-600">{{ team_performance.total_team_points }}</span>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Recent Completed Tasks -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-check-double text-green-600 mr-2"></i>
+                    Recently Completed
+                </h2>
+                
+                {% if recent_completed %}
+                <div class="space-y-3">
+                    {% for task in recent_completed %}
+                    <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900 truncate">{{ task.title }}</p>
+                            <div class="flex items-center mt-1 space-x-3">
+                                {% if task.assigned_to %}
+                                <span class="text-xs text-gray-600">
+                                    by {{ task.assigned_to.get_full_name|default:task.assigned_to.username }}
+                                </span>
+                                {% endif %}
+                                <span class="text-xs text-green-600">
+                                    {{ task.completion_date|timesince }} ago
+                                </span>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                +{{ task.points_value }} pts
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-8">
+                    <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-check-circle text-gray-400 text-xl"></i>
+                    </div>
+                    <p class="text-sm text-gray-600">No tasks completed in this period</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Chart.js Scripts -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Status Chart
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['To Do', 'In Progress', 'Review', 'Completed', 'Blocked'],
+            datasets: [{
+                data: [
+                    {{ status_stats.todo }},
+                    {{ status_stats.in_progress }},
+                    {{ status_stats.review }},
+                    {{ status_stats.completed }},
+                    {{ status_stats.blocked }}
+                ],
+                backgroundColor: [
+                    '#64748b',
+                    '#3b82f6',
+                    '#f59e0b',
+                    '#10b981',
+                    '#ef4444'
+                ],
+                borderWidth: 2,
+                borderColor: '#ffffff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true
+                    }
+                }
+            }
+        }
+    });
+
+    // Priority Chart
+    const priorityCtx = document.getElementById('priorityChart').getContext('2d');
+    new Chart(priorityCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Critical', 'Urgent', 'High', 'Medium', 'Low'],
+            datasets: [{
+                label: 'Tasks',
+                data: [
+                    {{ priority_stats.critical }},
+                    {{ priority_stats.urgent }},
+                    {{ priority_stats.high }},
+                    {{ priority_stats.medium }},
+                    {{ priority_stats.low }}
+                ],
+                backgroundColor: [
+                    '#dc2626',
+                    '#f97316',
+                    '#f59e0b',
+                    '#3b82f6',
+                    '#64748b'
+                ],
+                borderRadius: 4,
+                borderSkipped: false
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+});
+
+function updateDateRange() {
+    const range = document.getElementById('date-range').value;
+    const url = new URL(window.location);
+    url.searchParams.set('range', range);
+    window.location.href = url.toString();
+}
+</script>
+{% endblock %}

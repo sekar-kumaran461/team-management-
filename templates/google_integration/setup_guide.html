@@ -1,0 +1,250 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Google Drive Setup Guide - TeamLearn{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Page Header -->
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-lg p-8 text-white relative overflow-hidden">
+        <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white opacity-10 rounded-full"></div>
+        <div class="relative flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold">
+                    <i class="fab fa-google-drive mr-3"></i>
+                    Google Drive Integration Setup
+                </h1>
+                <p class="text-blue-100 mt-2">Connect your team management system with Google Drive for seamless file storage and database functionality</p>
+            </div>
+            <div class="flex space-x-3">
+                <a href="{% url 'google_integration:simple_dashboard' %}" class="inline-flex items-center px-6 py-3 border border-white border-opacity-30 text-sm font-medium rounded-lg text-white bg-white bg-opacity-20 hover:bg-opacity-30 transition-all duration-200">
+                    <i class="fas fa-tachometer-alt mr-2"></i>
+                    Dashboard
+                </a>
+                <button onclick="checkSetupStatus()" class="inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-lg text-blue-600 bg-white hover:bg-gray-50 transition-all duration-200 shadow-md hover:shadow-lg">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    Check Status
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Setup Progress -->
+    <div class="bg-white rounded-xl shadow-md p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Setup Progress</h2>
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center">
+                    <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                        <i class="fas fa-check text-white text-sm"></i>
+                    </div>
+                    <span class="ml-2 text-sm font-medium text-gray-900">Project Created</span>
+                </div>
+                <div class="w-16 h-0.5 bg-gray-300"></div>
+                <div class="flex items-center">
+                    <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                        <span class="text-gray-600 text-sm font-medium">2</span>
+                    </div>
+                    <span class="ml-2 text-sm font-medium text-gray-500">APIs Enabled</span>
+                </div>
+                <div class="w-16 h-0.5 bg-gray-300"></div>
+                <div class="flex items-center">
+                    <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                        <span class="text-gray-600 text-sm font-medium">3</span>
+                    </div>
+                    <span class="ml-2 text-sm font-medium text-gray-500">Service Account</span>
+                </div>
+                <div class="w-16 h-0.5 bg-gray-300"></div>
+                <div class="flex items-center">
+                    <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                        <span class="text-gray-600 text-sm font-medium">4</span>
+                    </div>
+                    <span class="ml-2 text-sm font-medium text-gray-500">Configuration</span>
+                </div>
+            </div>
+            <div class="text-sm text-gray-500">
+                Step 1 of 4 Complete
+            </div>
+        </div>
+    </div>
+
+        <!-- Setup Steps -->
+        <div class="space-y-8">
+            <!-- Step 1: Create Google Cloud Project -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center mb-4">
+                    <span class="flex items-center justify-center w-8 h-8 bg-blue-500 text-white rounded-full text-sm font-semibold mr-3">1</span>
+                    <h2 class="text-2xl font-semibold text-gray-900">Create Google Cloud Project</h2>
+                </div>
+                <div class="pl-11">
+                    <ol class="list-decimal list-inside space-y-2 text-gray-700">
+                        <li>Go to <a href="https://console.cloud.google.com/" target="_blank" class="text-blue-600 hover:underline">Google Cloud Console</a></li>
+                        <li>Click "New Project" or select an existing project</li>
+                        <li>Give your project a name (e.g., "Team Management System")</li>
+                        <li>Click "Create"</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- Step 2: Enable APIs -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center mb-4">
+                    <span class="flex items-center justify-center w-8 h-8 bg-blue-500 text-white rounded-full text-sm font-semibold mr-3">2</span>
+                    <h2 class="text-2xl font-semibold text-gray-900">Enable Required APIs</h2>
+                </div>
+                <div class="pl-11">
+                    <p class="text-gray-700 mb-3">Enable the following APIs in your Google Cloud Console:</p>
+                    <ul class="list-disc list-inside space-y-2 text-gray-700">
+                        <li><strong>Google Drive API</strong> - For file storage and management</li>
+                        <li><strong>Google Sheets API</strong> - For using Google Sheets as database</li>
+                        <li><strong>Google Apps Script API</strong> - For advanced automation</li>
+                    </ul>
+                    <div class="mt-3 p-3 bg-blue-50 rounded-md">
+                        <p class="text-sm text-blue-800">💡 <strong>Tip:</strong> Go to "APIs & Services" → "Library" and search for each API to enable them.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Create Credentials -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center mb-4">
+                    <span class="flex items-center justify-center w-8 h-8 bg-blue-500 text-white rounded-full text-sm font-semibold mr-3">3</span>
+                    <h2 class="text-2xl font-semibold text-gray-900">Create OAuth 2.0 Credentials</h2>
+                </div>
+                <div class="pl-11">
+                    <ol class="list-decimal list-inside space-y-2 text-gray-700">
+                        <li>Go to "APIs & Services" → "Credentials"</li>
+                        <li>Click "Create Credentials" → "OAuth 2.0 Client ID"</li>
+                        <li>Configure consent screen if prompted</li>
+                        <li>Choose "Web application" as application type</li>
+                        <li>Add authorized redirect URIs:
+                            <div class="mt-2 p-2 bg-gray-100 rounded font-mono text-sm">
+                                http://localhost:8000/google/auth/callback/<br>
+                                http://127.0.0.1:8000/google/auth/callback/
+                            </div>
+                        </li>
+                        <li>Click "Create" and download the JSON file</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- Step 4: Configuration -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center mb-4">
+                    <span class="flex items-center justify-center w-8 h-8 bg-blue-500 text-white rounded-full text-sm font-semibold mr-3">4</span>
+                    <h2 class="text-2xl font-semibold text-gray-900">Configure Your Application</h2>
+                </div>
+                <div class="pl-11">
+                    <p class="text-gray-700 mb-3">Add the following to your environment variables or Django settings:</p>
+                    <div class="bg-gray-900 text-green-400 p-4 rounded-md font-mono text-sm overflow-x-auto">
+                        <div># Add to your .env file or environment variables</div>
+                        <div class="mt-2">GOOGLE_OAUTH_CLIENT_ID=your_client_id_here</div>
+                        <div>GOOGLE_OAUTH_CLIENT_SECRET=your_client_secret_here</div>
+                        <div>GOOGLE_OAUTH_REDIRECT_URI=http://localhost:8000/google/auth/callback/</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 5: Database Options -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center mb-4">
+                    <span class="flex items-center justify-center w-8 h-8 bg-blue-500 text-white rounded-full text-sm font-semibold mr-3">5</span>
+                    <h2 class="text-2xl font-semibold text-gray-900">Choose Your Database Strategy</h2>
+                </div>
+                <div class="pl-11">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <h3 class="font-semibold text-gray-900 mb-2">📊 Google Sheets as Database</h3>
+                            <p class="text-sm text-gray-600 mb-3">Use Google Sheets to store your application data with real-time sync.</p>
+                            <div class="text-sm">
+                                <strong>Pros:</strong>
+                                <ul class="list-disc list-inside text-gray-600 mt-1">
+                                    <li>Easy to view and edit data</li>
+                                    <li>Real-time collaboration</li>
+                                    <li>Automatic backups</li>
+                                    <li>Built-in sharing features</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <h3 class="font-semibold text-gray-900 mb-2">💾 Hybrid Approach</h3>
+                            <p class="text-sm text-gray-600 mb-3">Keep local database + sync files to Google Drive.</p>
+                            <div class="text-sm">
+                                <strong>Pros:</strong>
+                                <ul class="list-disc list-inside text-gray-600 mt-1">
+                                    <li>Best performance</li>
+                                    <li>File backup to cloud</li>
+                                    <li>Offline capability</li>
+                                    <li>Django ORM benefits</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 6: Testing -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center mb-4">
+                    <span class="flex items-center justify-center w-8 h-8 bg-green-500 text-white rounded-full text-sm font-semibold mr-3">6</span>
+                    <h2 class="text-2xl font-semibold text-gray-900">Test Your Setup</h2>
+                </div>
+                <div class="pl-11">
+                    <div class="space-y-4">
+                        <div class="p-4 border border-yellow-200 bg-yellow-50 rounded-md">
+                            <p class="text-yellow-800"><strong>⚠️ Important:</strong> Make sure to complete the OAuth setup before testing the integration.</p>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <p class="text-gray-700"><strong>Test steps:</strong></p>
+                            <ol class="list-decimal list-inside space-y-1 text-gray-600">
+                                <li>Restart your Django development server</li>
+                                <li>Visit the Google Drive integration page</li>
+                                <li>Click "Connect to Google Drive"</li>
+                                <li>Complete the OAuth flow</li>
+                                <li>Test file upload and sync functionality</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="mt-12 text-center">
+            <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-6 text-white">
+                <h3 class="text-xl font-semibold mb-4">Ready to Get Started?</h3>
+                <p class="mb-6">Once you've completed the setup, you can start using Google Drive integration!</p>
+                <div class="space-x-4">
+                    <a href="#" onclick="alert('Please complete OAuth setup first!')" class="bg-white text-blue-600 px-6 py-2 rounded-lg font-medium hover:bg-gray-100 transition">
+                        Test Google Drive Connection
+                    </a>
+                    <a href="{% url 'users:dashboard' %}" class="border border-white text-white px-6 py-2 rounded-lg font-medium hover:bg-white hover:text-blue-600 transition">
+                        Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Documentation Links -->
+        <div class="mt-8 bg-gray-50 rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">📚 Additional Resources</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <a href="https://developers.google.com/drive/api" target="_blank" class="block p-3 bg-white rounded border hover:border-blue-300 hover:shadow-md transition">
+                    <h4 class="font-medium text-gray-900">Google Drive API Docs</h4>
+                    <p class="text-sm text-gray-600 mt-1">Official documentation for Google Drive API</p>
+                </a>
+                <a href="https://developers.google.com/sheets/api" target="_blank" class="block p-3 bg-white rounded border hover:border-blue-300 hover:shadow-md transition">
+                    <h4 class="font-medium text-gray-900">Google Sheets API Docs</h4>
+                    <p class="text-sm text-gray-600 mt-1">Learn how to use Google Sheets as a database</p>
+                </a>
+                <a href="https://console.cloud.google.com/" target="_blank" class="block p-3 bg-white rounded border hover:border-blue-300 hover:shadow-md transition">
+                    <h4 class="font-medium text-gray-900">Google Cloud Console</h4>
+                    <p class="text-sm text-gray-600 mt-1">Manage your Google Cloud project and APIs</p>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

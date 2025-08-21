@@ -1,0 +1,63 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+
+{% block title %}Assign Team Lead{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Home</a>
+    &rsaquo; <a href="{% url 'admin:projects_project_changelist' %}">Projects</a>
+    &rsaquo; Assign Team Lead
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="module aligned">
+    <h1>Assign Team Lead to Projects</h1>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <fieldset class="module aligned">
+            <h2>Selected Projects ({{ projects|length }})</h2>
+            
+            <div class="form-row">
+                <ul>
+                    {% for project in projects %}
+                        <li><strong>{{ project.name }}</strong> 
+                            {% if project.team_lead %}
+                                - Current lead: {{ project.team_lead.get_full_name }}
+                            {% else %}
+                                - No team lead assigned
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </fieldset>
+        
+        <fieldset class="module aligned">
+            <h2>Select New Team Lead</h2>
+            
+            <div class="form-row">
+                <label for="team_lead">Team Lead:</label>
+                <select name="team_lead" id="team_lead" required>
+                    <option value="">---------</option>
+                    {% for user in users %}
+                        <option value="{{ user.id }}">
+                            {{ user.get_full_name|default:user.email }} 
+                            ({{ user.get_role_display }})
+                        </option>
+                    {% endfor %}
+                </select>
+                <p class="help">Select a user to assign as team lead for all selected projects.</p>
+            </div>
+        </fieldset>
+        
+        <div class="submit-row">
+            <input type="submit" value="Assign Team Lead" class="default" />
+            <a href="{% url 'admin:projects_project_changelist' %}" class="button cancel-link">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

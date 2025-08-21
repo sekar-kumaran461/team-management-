@@ -1,0 +1,234 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+
+{% block title %}Team Analytics Dashboard{% endblock %}
+
+{% block extrahead %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .dashboard-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin: 20px 0;
+    }
+    
+    .stat-card {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+    }
+    
+    .stat-number {
+        font-size: 2.5em;
+        font-weight: bold;
+        color: #007cba;
+    }
+    
+    .stat-label {
+        font-size: 1.1em;
+        color: #666;
+        margin-top: 5px;
+    }
+    
+    .chart-container {
+        width: 100%;
+        height: 400px;
+        margin: 20px 0;
+    }
+    
+    .activity-list {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .activity-item {
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+    
+    .top-performer {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #eee;
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Home</a>
+    &rsaquo; <a href="{% url 'admin:analytics_teamanalytics_changelist' %}">Team Analytics</a>
+    &rsaquo; Dashboard
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="module">
+    <h1>Team Analytics Dashboard</h1>
+    
+    <!-- Key Metrics -->
+    <div class="dashboard-stats">
+        <div class="stat-card">
+            <div class="stat-number">{{ total_users }}</div>
+            <div class="stat-label">Total Users</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-number">{{ active_users_week }}</div>
+            <div class="stat-label">Active This Week</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-number">{{ completed_tasks }}</div>
+            <div class="stat-label">Tasks Completed</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-number">{{ completion_rate|floatformat:1 }}%</div>
+            <div class="stat-label">Task Completion Rate</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-number">{{ active_projects }}</div>
+            <div class="stat-label">Active Projects</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-number">{{ project_completion_rate|floatformat:1 }}%</div>
+            <div class="stat-label">Project Completion Rate</div>
+        </div>
+    </div>
+    
+    <!-- Charts Section -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 30px 0;">
+        <fieldset class="module">
+            <h2>Task Status Distribution</h2>
+            <div class="chart-container">
+                <canvas id="taskChart"></canvas>
+            </div>
+        </fieldset>
+        
+        <fieldset class="module">
+            <h2>Project Status Distribution</h2>
+            <div class="chart-container">
+                <canvas id="projectChart"></canvas>
+            </div>
+        </fieldset>
+    </div>
+    
+    <!-- Activity and Performance Section -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <fieldset class="module">
+            <h2>Recent Activities</h2>
+            <div class="activity-list">
+                {% for activity in recent_activities %}
+                    <div class="activity-item">
+                        <strong>{{ activity.user.get_full_name|default:activity.user.email }}</strong>
+                        <br>
+                        <small>{{ activity.description }}</small>
+                        <br>
+                        <small style="color: #666;">
+                            {{ activity.timestamp|date:"M d, Y H:i" }} 
+                            {% if activity.points_earned %}
+                                | +{{ activity.points_earned }} points
+                            {% endif %}
+                        </small>
+                    </div>
+                {% empty %}
+                    <div class="activity-item">No recent activities</div>
+                {% endfor %}
+            </div>
+        </fieldset>
+        
+        <fieldset class="module">
+            <h2>Top Performers (This Month)</h2>
+            <div>
+                {% for performer in top_performers %}
+                    <div class="top-performer">
+                        <span>
+                            <strong>{{ performer.user__first_name }} {{ performer.user__last_name|default:performer.user__email }}</strong>
+                        </span>
+                        <span style="color: #007cba; font-weight: bold;">
+                            {{ performer.total_points|default:0 }} points
+                        </span>
+                    </div>
+                {% empty %}
+                    <div class="top-performer">
+                        <span>No activity this month</span>
+                    </div>
+                {% endfor %}
+            </div>
+        </fieldset>
+    </div>
+    
+    <!-- Quick Actions -->
+    <fieldset class="module">
+        <h2>Quick Actions</h2>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <a href="{% url 'admin:users_user_changelist' %}" class="button">Manage Users</a>
+            <a href="{% url 'admin:tasks_task_changelist' %}" class="button">View All Tasks</a>
+            <a href="{% url 'admin:projects_project_changelist' %}" class="button">View All Projects</a>
+            <a href="{% url 'admin:analytics_badge_changelist' %}" class="button">Manage Badges</a>
+            <a href="{% url 'admin:resources_resource_changelist' %}" class="button">View Resources</a>
+        </div>
+    </fieldset>
+    
+    <div class="submit-row">
+        <a href="{% url 'admin:analytics_teamanalytics_changelist' %}" class="button cancel-link">Back to Analytics</a>
+    </div>
+</div>
+
+<script>
+// Task Status Chart
+const taskCtx = document.getElementById('taskChart').getContext('2d');
+new Chart(taskCtx, {
+    type: 'doughnut',
+    data: {
+        labels: ['Completed', 'Pending', 'In Progress'],
+        datasets: [{
+            data: [{{ completed_tasks }}, {{ total_tasks|add:"-completed_tasks" }}, {{ tasks_this_week }}],
+            backgroundColor: ['#28a745', '#ffc107', '#007cba']
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+// Project Status Chart
+const projectCtx = document.getElementById('projectChart').getContext('2d');
+new Chart(projectCtx, {
+    type: 'doughnut',
+    data: {
+        labels: ['Completed', 'Active', 'Planned'],
+        datasets: [{
+            data: [{{ completed_projects }}, {{ active_projects }}, {{ total_projects|add:"-completed_projects"|add:"-active_projects" }}],
+            backgroundColor: ['#28a745', '#007cba', '#6c757d']
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

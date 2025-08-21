@@ -1,0 +1,284 @@
+{% extends 'base.html' %}
+
+{% block title %}Task Calendar - TeamLearn{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Page Header -->
+    <div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl shadow-lg p-8 text-white relative overflow-hidden">
+        <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white opacity-10 rounded-full"></div>
+        <div class="relative flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold">Task Calendar</h1>
+                <p class="text-indigo-100 mt-2">Visual timeline of your tasks and deadlines</p>
+            </div>
+            <div class="flex space-x-3">
+                <a href="{% url 'tasks:task-list' %}" class="inline-flex items-center px-6 py-3 border border-white border-opacity-30 text-sm font-medium rounded-lg text-white bg-white bg-opacity-20 hover:bg-opacity-30 transition-all duration-200">
+                    <i class="fas fa-list mr-2"></i>
+                    List View
+                </a>
+                <a href="{% url 'tasks:task-create' %}" class="inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-lg text-indigo-600 bg-white hover:bg-gray-50 transition-all duration-200 shadow-md hover:shadow-lg">
+                    <i class="fas fa-plus mr-2"></i>
+                    New Task
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendar Controls -->
+    <div class="bg-white rounded-xl shadow-md p-6">
+        <div class="flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <button id="prev-month" class="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <h2 id="current-month" class="text-xl font-semibold text-gray-900"></h2>
+                <button id="next-month" class="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button id="today-btn" class="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-colors duration-200">
+                    Today
+                </button>
+                <div class="flex border border-gray-300 rounded-lg overflow-hidden">
+                    <button class="px-3 py-2 bg-indigo-600 text-white view-toggle active" data-view="month">
+                        Month
+                    </button>
+                    <button class="px-3 py-2 bg-white text-gray-700 hover:bg-gray-50 view-toggle" data-view="week">
+                        Week
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendar Grid -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <!-- Calendar Header -->
+        <div class="grid grid-cols-7 bg-gray-50 border-b border-gray-200">
+            <div class="p-4 text-center font-medium text-gray-700">Sunday</div>
+            <div class="p-4 text-center font-medium text-gray-700">Monday</div>
+            <div class="p-4 text-center font-medium text-gray-700">Tuesday</div>
+            <div class="p-4 text-center font-medium text-gray-700">Wednesday</div>
+            <div class="p-4 text-center font-medium text-gray-700">Thursday</div>
+            <div class="p-4 text-center font-medium text-gray-700">Friday</div>
+            <div class="p-4 text-center font-medium text-gray-700">Saturday</div>
+        </div>
+
+        <!-- Calendar Body -->
+        <div id="calendar-body" class="grid grid-cols-7">
+            <!-- Calendar days will be populated by JavaScript -->
+        </div>
+    </div>
+
+    <!-- Task Legend -->
+    <div class="bg-white rounded-xl shadow-md p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Task Priority Legend</h3>
+        <div class="flex flex-wrap gap-4">
+            <div class="flex items-center">
+                <div class="w-4 h-4 bg-red-500 rounded mr-2"></div>
+                <span class="text-sm text-gray-700">Critical/Urgent</span>
+            </div>
+            <div class="flex items-center">
+                <div class="w-4 h-4 bg-orange-500 rounded mr-2"></div>
+                <span class="text-sm text-gray-700">High Priority</span>
+            </div>
+            <div class="flex items-center">
+                <div class="w-4 h-4 bg-yellow-500 rounded mr-2"></div>
+                <span class="text-sm text-gray-700">Medium Priority</span>
+            </div>
+            <div class="flex items-center">
+                <div class="w-4 h-4 bg-green-500 rounded mr-2"></div>
+                <span class="text-sm text-gray-700">Low Priority</span>
+            </div>
+            <div class="flex items-center">
+                <div class="w-4 h-4 bg-gray-300 rounded mr-2"></div>
+                <span class="text-sm text-gray-700">Completed</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Task Detail Modal -->
+<div id="task-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modal-title" class="text-lg font-semibold text-gray-900"></h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="modal-content" class="space-y-4">
+                <!-- Task details will be populated by JavaScript -->
+            </div>
+            <div class="flex justify-end space-x-3 mt-6">
+                <button onclick="closeModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                    Close
+                </button>
+                <a id="modal-edit-link" href="#" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                    Edit Task
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Calendar functionality
+let currentMonth = new Date().getMonth();
+let currentYear = new Date().getFullYear();
+
+// Sample task data - replace with actual data from backend
+const tasks = [
+    {% for task in tasks %}
+    {
+        id: {{ task.id }},
+        title: "{{ task.title|escapejs }}",
+        dueDate: "{{ task.due_date|date:'Y-m-d' }}",
+        priority: "{{ task.priority }}",
+        status: "{{ task.status }}",
+        assignedTo: "{{ task.assigned_to.full_name|default:task.assigned_to.email|escapejs }}"
+    },
+    {% endfor %}
+];
+
+function initCalendar() {
+    updateCalendarHeader();
+    renderCalendar();
+}
+
+function updateCalendarHeader() {
+    const monthNames = ["January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"];
+    document.getElementById('current-month').textContent = `${monthNames[currentMonth]} ${currentYear}`;
+}
+
+function renderCalendar() {
+    const calendarBody = document.getElementById('calendar-body');
+    calendarBody.innerHTML = '';
+
+    const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    const today = new Date();
+
+    // Add empty cells for days before the first day of the month
+    for (let i = 0; i < firstDay; i++) {
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'p-2 h-32 border-b border-r border-gray-200 bg-gray-50';
+        calendarBody.appendChild(emptyCell);
+    }
+
+    // Add cells for each day of the month
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dayCell = document.createElement('div');
+        dayCell.className = 'p-2 h-32 border-b border-r border-gray-200 hover:bg-gray-50 transition-colors duration-200';
+        
+        const isToday = today.getDate() === day && today.getMonth() === currentMonth && today.getFullYear() === currentYear;
+        if (isToday) {
+            dayCell.classList.add('bg-blue-50');
+        }
+
+        const dayNumber = document.createElement('div');
+        dayNumber.className = `text-sm font-medium ${isToday ? 'text-blue-600' : 'text-gray-900'} mb-1`;
+        dayNumber.textContent = day;
+        dayCell.appendChild(dayNumber);
+
+        // Add tasks for this day
+        const dayTasks = tasks.filter(task => {
+            const taskDate = new Date(task.dueDate);
+            return taskDate.getDate() === day && taskDate.getMonth() === currentMonth && taskDate.getFullYear() === currentYear;
+        });
+
+        dayTasks.forEach(task => {
+            const taskElement = document.createElement('div');
+            taskElement.className = `text-xs p-1 mb-1 rounded cursor-pointer truncate ${getPriorityClass(task.priority)}`;
+            taskElement.textContent = task.title;
+            taskElement.onclick = () => showTaskModal(task);
+            dayCell.appendChild(taskElement);
+        });
+
+        calendarBody.appendChild(dayCell);
+    }
+}
+
+function getPriorityClass(priority) {
+    switch (priority) {
+        case 'critical':
+        case 'urgent':
+            return 'bg-red-100 text-red-800 hover:bg-red-200';
+        case 'high':
+            return 'bg-orange-100 text-orange-800 hover:bg-orange-200';
+        case 'medium':
+            return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200';
+        case 'low':
+            return 'bg-green-100 text-green-800 hover:bg-green-200';
+        default:
+            return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
+    }
+}
+
+function showTaskModal(task) {
+    document.getElementById('modal-title').textContent = task.title;
+    document.getElementById('modal-content').innerHTML = `
+        <div class="space-y-3">
+            <div>
+                <span class="text-sm font-medium text-gray-500">Due Date:</span>
+                <span class="text-sm text-gray-900 ml-2">${new Date(task.dueDate).toLocaleDateString()}</span>
+            </div>
+            <div>
+                <span class="text-sm font-medium text-gray-500">Priority:</span>
+                <span class="text-sm text-gray-900 ml-2 capitalize">${task.priority}</span>
+            </div>
+            <div>
+                <span class="text-sm font-medium text-gray-500">Status:</span>
+                <span class="text-sm text-gray-900 ml-2 capitalize">${task.status.replace('_', ' ')}</span>
+            </div>
+            <div>
+                <span class="text-sm font-medium text-gray-500">Assigned to:</span>
+                <span class="text-sm text-gray-900 ml-2">${task.assignedTo}</span>
+            </div>
+        </div>
+    `;
+    document.getElementById('modal-edit-link').href = `/tasks/${task.id}/edit/`;
+    document.getElementById('task-modal').classList.remove('hidden');
+}
+
+function closeModal() {
+    document.getElementById('task-modal').classList.add('hidden');
+}
+
+// Event listeners
+document.getElementById('prev-month').addEventListener('click', () => {
+    currentMonth--;
+    if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+    }
+    updateCalendarHeader();
+    renderCalendar();
+});
+
+document.getElementById('next-month').addEventListener('click', () => {
+    currentMonth++;
+    if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+    }
+    updateCalendarHeader();
+    renderCalendar();
+});
+
+document.getElementById('today-btn').addEventListener('click', () => {
+    const today = new Date();
+    currentMonth = today.getMonth();
+    currentYear = today.getFullYear();
+    updateCalendarHeader();
+    renderCalendar();
+});
+
+// Initialize calendar on page load
+document.addEventListener('DOMContentLoaded', initCalendar);
+</script>
+{% endblock %}

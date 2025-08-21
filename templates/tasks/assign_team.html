@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Assign Team - {{ task.title }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+            <nav class="flex items-center space-x-2 text-sm text-gray-500 mb-4">
+                <a href="{% url 'tasks:task-list' %}" class="hover:text-gray-700">Tasks</a>
+                <i class="fas fa-chevron-right text-xs"></i>
+                <a href="{% url 'tasks:task-detail' task.id %}" class="hover:text-gray-700">{{ task.title|truncatechars:50 }}</a>
+                <i class="fas fa-chevron-right text-xs"></i>
+                <span class="text-gray-900">Assign Team</span>
+            </nav>
+            
+            <div class="flex items-start justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900 mb-2">Assign Team Members</h1>
+                    <p class="text-gray-600">Manage who can work on this task</p>
+                </div>
+                <a href="{% url 'tasks:task-detail' task.id %}" 
+                   class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Back to Task
+                </a>
+            </div>
+        </div>
+
+        <!-- Current Assignment Status -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-info-circle text-blue-600 mr-2"></i>
+                Current Assignment
+            </h2>
+            
+            <div class="bg-gray-50 rounded-lg p-4">
+                {% if current_assignment.all_users %}
+                    <div class="flex items-center text-blue-600">
+                        <i class="fas fa-users text-lg mr-3"></i>
+                        <span class="font-medium">Assigned to All Team Members</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-1">This task is visible and submittable by all active users</p>
+                {% elif current_assignment.user %}
+                    <div class="flex items-center text-green-600">
+                        <i class="fas fa-user text-lg mr-3"></i>
+                        <span class="font-medium">Assigned to {{ current_assignment.user.get_full_name }}</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-1">Only the assigned user can submit this task</p>
+                {% else %}
+                    <div class="flex items-center text-gray-500">
+                        <i class="fas fa-user-slash text-lg mr-3"></i>
+                        <span class="font-medium">No Assignment</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-1">This task is not assigned to anyone</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Assignment Options -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <!-- Assign to All Team Members -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+                        <i class="fas fa-users text-blue-600 text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">All Team Members</h3>
+                        <p class="text-sm text-gray-600">Make this task available to everyone</p>
+                    </div>
+                </div>
+                
+                <div class="space-y-3 mb-6">
+                    <div class="flex items-center text-sm text-gray-600">
+                        <i class="fas fa-check text-green-500 mr-2"></i>
+                        <span>All users can view and submit</span>
+                    </div>
+                    <div class="flex items-center text-sm text-gray-600">
+                        <i class="fas fa-check text-green-500 mr-2"></i>
+                        <span>Great for learning tasks</span>
+                    </div>
+                    <div class="flex items-center text-sm text-gray-600">
+                        <i class="fas fa-check text-green-500 mr-2"></i>
+                        <span>Promotes collaboration</span>
+                    </div>
+                </div>
+                
+                <form method="post" class="space-y-4">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="assign_all">
+                    <button type="submit" 
+                            class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+                            {% if current_assignment.all_users %}disabled{% endif %}>
+                        <i class="fas fa-users mr-2"></i>
+                        {% if current_assignment.all_users %}Already Assigned to All{% else %}Assign to All{% endif %}
+                    </button>
+                </form>
+            </div>
+
+            <!-- Assign to Specific User -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
+                        <i class="fas fa-user-tag text-green-600 text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">Specific User</h3>
+                        <p class="text-sm text-gray-600">Assign to a particular team member</p>
+                    </div>
+                </div>
+                
+                <div class="space-y-3 mb-6">
+                    <div class="flex items-center text-sm text-gray-600">
+                        <i class="fas fa-check text-green-500 mr-2"></i>
+                        <span>Individual responsibility</span>
+                    </div>
+                    <div class="flex items-center text-sm text-gray-600">
+                        <i class="fas fa-check text-green-500 mr-2"></i>
+                        <span>Focused workload</span>
+                    </div>
+                    <div class="flex items-center text-sm text-gray-600">
+                        <i class="fas fa-check text-green-500 mr-2"></i>
+                        <span>Clear accountability</span>
+                    </div>
+                </div>
+                
+                <form method="post" class="space-y-4">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="assign_single">
+                    
+                    <div>
+                        <label for="user_id" class="block text-sm font-medium text-gray-700 mb-2">
+                            Select Team Member
+                        </label>
+                        <select name="user_id" id="user_id" 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">Choose a user...</option>
+                            {% for user in available_users %}
+                            <option value="{{ user.id }}" 
+                                    {% if current_assignment.user and current_assignment.user.id == user.id %}selected{% endif %}>
+                                {{ user.get_full_name }} ({{ user.email }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <button type="submit" 
+                            class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 transition-colors">
+                        <i class="fas fa-user-tag mr-2"></i>
+                        Assign to User
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Unassign Option -->
+        {% if current_assignment.user or current_assignment.all_users %}
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mr-4">
+                        <i class="fas fa-user-slash text-red-600 text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">Remove Assignment</h3>
+                        <p class="text-sm text-gray-600">Unassign this task from all users</p>
+                    </div>
+                </div>
+                
+                <form method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="unassign">
+                    <button type="submit" 
+                            onclick="return confirm('Are you sure you want to remove the assignment?')"
+                            class="inline-flex items-center px-4 py-2 border border-red-300 text-sm font-medium rounded-lg text-red-700 bg-white hover:bg-red-50 transition-colors">
+                        <i class="fas fa-times mr-2"></i>
+                        Unassign
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add confirmation for critical actions
+    const forms = document.querySelectorAll('form');
+    forms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            const action = form.querySelector('input[name="action"]').value;
+            if (action === 'assign_all') {
+                const confirmed = confirm('This will make the task visible to all team members. Continue?');
+                if (!confirmed) {
+                    e.preventDefault();
+                }
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

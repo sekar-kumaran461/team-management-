@@ -1,0 +1,409 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Submit Task - Team Management{% endblock %}
+
+{% block extra_css %}
+<style>
+    .upload-area {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%);
+        border: 2px dashed #c7d2fe;
+        transition: all 0.3s ease;
+    }
+    
+    .upload-area:hover {
+        border-color: #3b82f6;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(147, 51, 234, 0.2) 100%);
+    }
+    
+    .drag-active {
+        border-color: #3b82f6;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(147, 51, 234, 0.3) 100%);
+        transform: scale(1.02);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-8" style="height: 80vh; overflow-y: scroll;">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl shadow-lg p-8 text-white mb-8">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+            <div>
+                <h1 class="text-3xl font-bold mb-2">Submit Task Work</h1>
+                <p class="text-blue-100 text-lg">Upload your completed work and provide details</p>
+            </div>
+            <div class="mt-6 lg:mt-0">
+                <a href="{% url 'tasks:my-tasks' %}" 
+                   class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 backdrop-blur-sm">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to My Tasks
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% if task %}
+    <!-- Task Information -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">Task Information</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-800 mb-2">{{ task.title }}</h3>
+                <p class="text-gray-600 mb-4">{{ task.description|truncatewords:30 }}</p>
+                <div class="space-y-2 text-sm">
+                    <div class="flex items-center">
+                        <i class="fas fa-calendar text-blue-600 mr-2"></i>
+                        <span>Due: {{ task.due_date|date:"M d, Y H:i"|default:"No deadline" }}</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-flag text-orange-600 mr-2"></i>
+                        <span>Priority: {{ task.get_priority_display }}</span>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <h4 class="font-semibold text-gray-800 mb-2">Acceptance Criteria</h4>
+                {% if task.acceptance_criteria %}
+                    <div class="bg-blue-50 border-l-4 border-blue-400 p-3 rounded-r-lg">
+                        <p class="text-gray-700 text-sm">{{ task.acceptance_criteria|truncatewords:20 }}</p>
+                    </div>
+                {% else %}
+                    <p class="text-gray-500 text-sm">No specific criteria provided</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Submission Form -->
+    <div>
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">Submit Your Work</h2>
+        
+        <form method="post" enctype="multipart/form-data" class="space-y-8">
+            {% csrf_token %}
+            
+            <!-- Submission Title and Type -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    {{ form.title.label_tag }}
+                    {{ form.title }}
+                </div>
+                <div>
+                    {{ form.submission_type.label_tag }}
+                    {{ form.submission_type }}
+                </div>
+            </div>
+
+            <!-- Submission Description -->
+            <div>
+                {{ form.description.label_tag }}
+                {{ form.description }}
+            </div>
+
+            <!-- File Upload Section -->
+            <div class="bg-gray-50 rounded-xl p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-upload mr-2 text-blue-600"></i>Upload Files
+                </h3>
+                <div class="flex flex-col items-center">
+                    <input type="file" name="file" id="id_file" class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-4" accept=".pdf,.doc,.docx,.txt,.py,.js,.html,.css,.png,.jpg,.jpeg,.gif,.zip">
+                    <div class="text-sm text-gray-400">
+                        <div class="mb-2"><strong>Supported formats:</strong></div>
+                        <div class="flex flex-wrap gap-2 justify-center">
+                            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">Documents (PDF, DOC, TXT)</span>
+                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">Code Files (PY, JS, HTML, CSS)</span>
+                            <span class="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs">Images (PNG, JPG, GIF)</span>
+                            <span class="bg-orange-100 text-orange-800 px-2 py-1 rounded text-xs">Archives (ZIP)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GitHub/External Links Section -->
+            <div class="bg-gray-50 rounded-xl p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fab fa-github mr-2 text-gray-800"></i>External Links
+                </h3>
+                
+                <div class="space-y-4">
+                    <!-- GitHub Repository -->
+                    <div>
+                        <label for="github_url" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fab fa-github mr-2"></i>GitHub Repository URL
+                        </label>
+                        {{ form.external_url }}
+                        <p class="text-xs text-gray-500 mt-1">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Link to your GitHub repository, Google Drive folder, or other external resources
+                        </p>
+                    </div>
+
+                    <!-- Quick GitHub Info -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-4">
+                        <h4 class="font-medium text-gray-800 mb-2">
+                            <i class="fas fa-lightbulb mr-2 text-yellow-500"></i>GitHub Best Practices
+                        </h4>
+                        <ul class="text-sm text-gray-600 space-y-1">
+                            <li>• Include a detailed README.md file</li>
+                            <li>• Add clear commit messages</li>
+                            <li>• Include comments in your code</li>
+                            <li>• Make sure repository is public or invite your instructor</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Notes -->
+            <div>
+                {{ form.notes.label_tag }}
+                {{ form.notes }}
+                <p class="text-xs text-gray-500 mt-1">
+                    Describe your approach, challenges faced, or any additional information about your submission
+                </p>
+            </div>
+
+            <!-- Work Summary -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white border border-gray-200 rounded-lg p-4">
+                    <label for="hours_spent" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-clock mr-2"></i>Hours Spent
+                    </label>
+                    <input type="number" id="hours_spent" name="hours_spent" step="0.5" min="0" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder="e.g., 2.5">
+                    <p class="text-xs text-gray-500 mt-1">Track time spent on this task</p>
+                </div>
+                <div class="bg-white border border-gray-200 rounded-lg p-4">
+                    <label for="completion_percentage" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-percentage mr-2"></i>Completion Status
+                    </label>
+                    <select id="completion_percentage" name="completion_percentage" 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">Select completion...</option>
+                        <option value="25">25% - Started working</option>
+                        <option value="50">50% - Half way done</option>
+                        <option value="75">75% - Nearly complete</option>
+                        <option value="100">100% - Fully completed</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Submission Preview -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-blue-900 mb-3">
+                    <i class="fas fa-eye mr-2"></i>Submission Summary
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div>
+                        <span class="font-medium text-blue-800">Files:</span>
+                        <span id="file-count" class="text-blue-600">0 selected</span>
+                    </div>
+                    <div>
+                        <span class="font-medium text-blue-800">External Link:</span>
+                        <span id="link-status" class="text-blue-600">Not provided</span>
+                    </div>
+                    <div>
+                        <span class="font-medium text-blue-800">Status:</span>
+                        <span id="completion-status" class="text-blue-600">Not selected</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-end pt-6 border-t border-gray-200 sticky bottom-0 bg-white z-10">
+                <a href="{% if task %}{% url 'tasks:task-detail' task.id %}{% else %}{% url 'tasks:my-tasks' %}{% endif %}" 
+                   class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-3 rounded-lg font-medium transition-colors duration-200 text-center">
+                    <i class="fas fa-arrow-left mr-2"></i>Cancel
+                </a>
+                <button type="button" onclick="validateAndSubmit()" 
+                        class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200">
+                    <i class="fas fa-paper-plane mr-2"></i>Submit Work
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Submission Confirmation Modal -->
+<div id="confirmationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-xl p-6 m-4 max-w-md w-full">
+        <div class="text-center">
+            <div class="text-green-500 mb-4">
+                <i class="fas fa-check-circle text-4xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Ready to Submit?</h3>
+            <p class="text-gray-600 mb-4">Please review your submission before finalizing.</p>
+            <div class="flex gap-3 justify-center">
+                <button onclick="hideConfirmation()" 
+                        class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors duration-200">
+                    Review Again
+                </button>
+                <button onclick="submitForm()" 
+                        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200">
+                    Confirm Submit
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let selectedFiles = [];
+
+// File upload handling
+document.getElementById('file-input').addEventListener('change', function(e) {
+    selectedFiles = Array.from(e.target.files);
+    displaySelectedFiles();
+    updateSubmissionSummary();
+});
+
+function displaySelectedFiles() {
+    const fileList = document.getElementById('file-list');
+    fileList.innerHTML = '';
+    
+    if (selectedFiles.length === 0) {
+        fileList.innerHTML = '<p class="text-gray-500 text-sm text-center py-4">No files selected</p>';
+        return;
+    }
+    
+    selectedFiles.forEach((file, index) => {
+        const fileIcon = getFileIcon(file.name);
+        const fileSize = formatFileSize(file.size);
+        
+        const fileItem = document.createElement('div');
+        fileItem.className = 'flex items-center justify-between bg-white border border-gray-200 p-4 rounded-lg shadow-sm';
+        fileItem.innerHTML = `
+            <div class="flex items-center">
+                <i class="${fileIcon} text-blue-600 mr-3 text-lg"></i>
+                <div>
+                    <div class="font-medium text-gray-900">${file.name}</div>
+                    <div class="text-sm text-gray-500">${fileSize} • ${file.type || 'Unknown type'}</div>
+                </div>
+            </div>
+            <button type="button" onclick="removeFile(${index})" 
+                    class="text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50 transition-colors">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        fileList.appendChild(fileItem);
+    });
+}
+
+function getFileIcon(filename) {
+    const ext = filename.split('.').pop().toLowerCase();
+    const iconMap = {
+        'pdf': 'fas fa-file-pdf',
+        'doc': 'fas fa-file-word', 'docx': 'fas fa-file-word',
+        'txt': 'fas fa-file-alt',
+        'zip': 'fas fa-file-archive', 'rar': 'fas fa-file-archive',
+        'png': 'fas fa-file-image', 'jpg': 'fas fa-file-image', 'jpeg': 'fas fa-file-image', 'gif': 'fas fa-file-image',
+        'py': 'fas fa-file-code', 'js': 'fas fa-file-code', 'html': 'fas fa-file-code', 'css': 'fas fa-file-code',
+        'java': 'fas fa-file-code', 'cpp': 'fas fa-file-code', 'c': 'fas fa-file-code'
+    };
+    return iconMap[ext] || 'fas fa-file';
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function removeFile(index) {
+    selectedFiles.splice(index, 1);
+    
+    // Update the file input
+    const dt = new DataTransfer();
+    selectedFiles.forEach(file => dt.items.add(file));
+    document.getElementById('file-input').files = dt.files;
+    
+    displaySelectedFiles();
+    updateSubmissionSummary();
+}
+
+function updateSubmissionSummary() {
+    // Update file count
+    const fileCount = selectedFiles.length;
+    document.getElementById('file-count').textContent = fileCount === 0 ? '0 selected' : `${fileCount} file${fileCount > 1 ? 's' : ''} selected`;
+    
+    // Update external link status
+    const externalUrl = document.querySelector('input[name="external_url"]').value;
+    document.getElementById('link-status').textContent = externalUrl ? 'Provided' : 'Not provided';
+    
+    // Update completion status
+    const completion = document.getElementById('completion_percentage').value;
+    document.getElementById('completion-status').textContent = completion ? `${completion}% complete` : 'Not selected';
+}
+
+function validateAndSubmit() {
+    const hasFiles = selectedFiles.length > 0;
+    const hasExternalUrl = document.querySelector('input[name="external_url"]').value.trim() !== '';
+    const hasTitle = document.querySelector('input[name="title"]').value.trim() !== '';
+    
+    if (!hasTitle) {
+        alert('Please provide a submission title.');
+        return;
+    }
+    
+    if (!hasFiles && !hasExternalUrl) {
+        alert('Please either upload files or provide an external link (GitHub, etc.).');
+        return;
+    }
+    
+    document.getElementById('confirmationModal').classList.remove('hidden');
+}
+
+function submitForm() {
+    document.querySelector('form').submit();
+}
+
+function hideConfirmation() {
+    document.getElementById('confirmationModal').classList.add('hidden');
+}
+
+// Update summary when external URL changes
+document.querySelector('input[name="external_url"]').addEventListener('input', updateSubmissionSummary);
+document.getElementById('completion_percentage').addEventListener('change', updateSubmissionSummary);
+
+// Drag and drop functionality
+const uploadArea = document.querySelector('.upload-area');
+
+uploadArea.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    this.classList.add('drag-active');
+});
+
+uploadArea.addEventListener('dragleave', function(e) {
+    e.preventDefault();
+    this.classList.remove('drag-active');
+});
+
+uploadArea.addEventListener('drop', function(e) {
+    e.preventDefault();
+    this.classList.remove('drag-active');
+    const files = Array.from(e.dataTransfer.files);
+    selectedFiles = files;
+    
+    // Update the file input
+    const dt = new DataTransfer();
+    files.forEach(file => dt.items.add(file));
+    document.getElementById('file-input').files = dt.files;
+    
+    displaySelectedFiles();
+    updateSubmissionSummary();
+});
+
+// Close modal when clicking outside
+document.getElementById('confirmationModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        this.classList.add('hidden');
+    }
+});
+
+// Initialize summary
+updateSubmissionSummary();
+</script>
+{% endblock %}

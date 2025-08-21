@@ -1,0 +1,81 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_modify %}
+
+{% block title %}Bulk Import Tasks{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Home</a>
+    &rsaquo; <a href="{% url 'admin:tasks_task_changelist' %}">Tasks</a>
+    &rsaquo; Bulk Import
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="module aligned">
+    <h1>Bulk Import Tasks</h1>
+    
+    <div class="help">
+        <p>You can upload tasks in bulk using CSV or Excel files. The file should contain the following columns:</p>
+        <ul>
+            <li><strong>title</strong> - Task title (required)</li>
+            <li><strong>description</strong> - Task description</li>
+            <li><strong>task_type</strong> - Type: dsa, python, ml, django, project, general</li>
+            <li><strong>assigned_to_email</strong> - Email of the user to assign the task to (required)</li>
+            <li><strong>due_date</strong> - Due date in YYYY-MM-DD format (required)</li>
+            <li><strong>priority</strong> - Priority: low, medium, high, urgent</li>
+            <li><strong>points</strong> - Points for completing the task (default: 10)</li>
+        </ul>
+        
+        <p><a href="{% static 'sample_tasks_import.csv' %}" download>Download sample CSV template</a></p>
+    </div>
+    
+    <form enctype="multipart/form-data" method="post">
+        {% csrf_token %}
+        
+        <fieldset class="module aligned">
+            <h2>Upload File</h2>
+            
+            <div class="form-row">
+                <div>
+                    <label for="csv_file">CSV File:</label>
+                    <input type="file" name="csv_file" id="csv_file" accept=".csv" />
+                    <p class="help">Upload a CSV file with task data.</p>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div>
+                    <label for="excel_file">Excel File:</label>
+                    <input type="file" name="excel_file" id="excel_file" accept=".xlsx,.xls" />
+                    <p class="help">Upload an Excel file with task data.</p>
+                </div>
+            </div>
+        </fieldset>
+        
+        <div class="submit-row">
+            <input type="submit" value="Import Tasks" class="default" />
+            <a href="{% url 'admin:tasks_task_changelist' %}" class="button cancel-link">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const csvInput = document.getElementById('csv_file');
+    const excelInput = document.getElementById('excel_file');
+    
+    csvInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            excelInput.value = '';
+        }
+    });
+    
+    excelInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            csvInput.value = '';
+        }
+    });
+});
+</script>
+{% endblock %}

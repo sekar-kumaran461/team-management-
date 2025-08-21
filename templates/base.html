@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}TeamLearn Management System{% endblock %}</title>
+    {% load static %}
+    <link href="{% static 'css/tailwind.css' %}" rel="stylesheet">
+                       
+    </script>
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js for analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Alpine.js for interactivity -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Custom Styles -->
+    <style>
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        
+        /* Custom focus styles */
+        .focus-ring:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            border-color: #3b82f6;
+        }
+        
+        /* Smooth transitions */
+        .transition-all {
+            transition: all 0.2s ease-in-out;
+        }
+        
+        /* Hover animations */
+        .hover-lift:hover {
+            transform: translateY(-2px);
+        }
+        
+        /* Gradient text */
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* Glass effect */
+        .glass {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-gray-50 min-h-screen antialiased">
+    {% if user.is_authenticated %}
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex">
+                    <!-- Logo -->
+                    <div class="flex-shrink-0 flex items-center">
+                        <a href="{% url 'users:dashboard' %}" class="text-2xl font-bold gradient-text hover:scale-105 transition-transform duration-200">
+                            <i class="fas fa-users-gear mr-2"></i>TeamLearn
+                        </a>
+                    </div>
+                    
+                    <!-- Main Navigation -->
+                    <div class="hidden md:ml-8 md:flex md:space-x-8">
+                        {% if user.is_staff %}
+                        <a href="{% url 'tasks:admin-task-submissions' %}" class="inline-flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg font-semibold shadow hover:bg-blue-700 transition-all duration-200">
+                            <i class="fas fa-file-alt mr-2"></i>Review Task Submissions
+                        </a>
+                        {% endif %}
+                        <a href="{% url 'users:dashboard' %}" 
+                           class="{% if request.resolver_match.url_name == 'dashboard' %}border-blue-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-all duration-200">
+                            <i class="fas fa-dashboard mr-2"></i>Dashboard
+                        </a>
+                        <a href="{% url 'tasks:task-list' %}" 
+                           class="{% if 'tasks' in request.resolver_match.namespace %}border-blue-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-all duration-200">
+                            <i class="fas fa-tasks mr-2"></i>Tasks
+                        </a>
+                        <a href="{% url 'resources:resource-list' %}" 
+                           class="{% if 'resources' in request.resolver_match.namespace %}border-blue-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-all duration-200">
+                            <i class="fas fa-folder-open mr-2"></i>Resources
+                        </a>
+                        <a href="{% url 'projects:project-list' %}" 
+                           class="{% if 'projects' in request.resolver_match.namespace %}border-blue-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-all duration-200">
+                            <i class="fas fa-project-diagram mr-2"></i>Projects
+                        </a>
+                        <a href="{% url 'analytics:dashboard' %}" 
+                           class="{% if 'analytics' in request.resolver_match.namespace %}border-blue-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-all duration-200">
+                            <i class="fas fa-chart-line mr-2"></i>Analytics
+                        </a>
+                        <a href="{% url 'google_integration:setup_guide' %}" 
+                           class="{% if 'google_integration' in request.resolver_match.namespace %}border-blue-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-all duration-200">
+                            <i class="fab fa-google-drive mr-2"></i>Google Drive
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- User Menu -->
+                <div class="flex items-center" x-data="{ open: false, quickActions: false }">
+                    <!-- Quick Actions Dropdown -->
+                    {% if user.is_admin or user.role == 'teacher' %}
+                    <div class="relative mr-4">
+                        <button @click="quickActions = !quickActions" 
+                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:ring-primary-200 transition-all duration-200 shadow-lg hover:shadow-xl">
+                            <i class="fas fa-plus mr-2"></i>
+                            Quick Add
+                            <i class="fas fa-chevron-down ml-2 text-xs"></i>
+                        </button>
+                        
+                        <div x-show="quickActions" @click.away="quickActions = false" 
+                             x-transition:enter="transition ease-out duration-100" 
+                             x-transition:enter-start="transform opacity-0 scale-95" 
+                             x-transition:enter-end="transform opacity-100 scale-100" 
+                             x-transition:leave="transition ease-in duration-75" 
+                             x-transition:leave-start="transform opacity-100 scale-100" 
+                             x-transition:leave-end="transform opacity-0 scale-95"
+                             class="origin-top-right absolute right-0 mt-2 w-56 rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
+                            <div class="py-2">
+                                {% if user.can_manage_tasks %}
+                                <a href="{% url 'tasks:task-create' %}" class="group flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                                        <i class="fas fa-tasks text-purple-600"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium">New Task</div>
+                                        <div class="text-xs text-gray-500">Create learning task</div>
+                                    </div>
+                                </a>
+                                {% endif %}
+                                <a href="{% url 'resources:resource-upload' %}" class="group flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <div class="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center mr-3">
+                                        <i class="fas fa-upload text-emerald-600"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium">Upload Resource</div>
+                                        <div class="text-xs text-gray-500">Share learning material</div>
+                                    </div>
+                                </a>
+                                <a href="{% url 'projects:project-create' %}" class="group flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                                        <i class="fas fa-rocket text-blue-600"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium">New Project</div>
+                                        <div class="text-xs text-gray-500">Start team project</div>
+                                    </div>
+                                </a>
+                                {% if user.can_manage_tasks %}
+                                <div class="border-t border-gray-100 my-2"></div>
+                                <a href="{% url 'tasks:bulk-upload' %}" class="group flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
+                                        <i class="fas fa-file-excel text-orange-600"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium">Bulk Upload</div>
+                                        <div class="text-xs text-gray-500">Import from Excel/CSV</div>
+                                    </div>
+                                </a>
+                                {% endif %}
+                                {% if user.can_manage_users %}
+                                <div class="border-t border-gray-100 my-2"></div>
+                                <a href="{% url 'users:user-management' %}" class="group flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <div class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center mr-3">
+                                        <i class="fas fa-users-cog text-red-600"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium">Manage Users</div>
+                                        <div class="text-xs text-gray-500">User administration</div>
+                                    </div>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Notifications -->
+                    <div class="mr-4">
+                        <button class="relative p-2 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-bell text-lg"></i>
+                            <span class="absolute top-1 right-1 block h-2 w-2 rounded-full bg-red-400"></span>
+                        </button>
+                    </div>
+                    
+                    <div class="ml-3 relative">
+                        <div>
+                            <button @click="open = !open" class="bg-white rounded-full flex text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200 hover:shadow-md" id="user-menu-button">
+                                {% if user.profile_picture %}
+                                    <img class="h-10 w-10 rounded-full object-cover" src="{{ user.profile_picture.url }}" alt="{{ user.full_name }}">
+                                {% else %}
+                                    <div class="h-10 w-10 rounded-full bg-gradient-to-r from-primary-500 to-purple-600 flex items-center justify-center shadow-lg">
+                                        <span class="text-white text-sm font-medium">{{ user.first_name.0 }}{{ user.last_name.0 }}</span>
+                                    </div>
+                                {% endif %}
+                            </button>
+                        </div>
+                        
+                        <div x-show="open" @click.away="open = false" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="transform opacity-100 scale-100" x-transition:leave-end="transform opacity-0 scale-95" class="origin-top-right absolute right-0 mt-2 w-56 rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
+                            <div class="py-1">
+                                <div class="px-4 py-3 text-sm border-b border-gray-100">
+                                    <div class="font-medium text-gray-900">{{ user.full_name }}</div>
+                                    <div class="text-gray-500">{{ user.email }}</div>
+                                    <div class="mt-1">
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+                                            {% if user.role == 'student' %}Student
+                                            {% elif user.role == 'teacher' %}Teacher  
+                                            {% elif user.role == 'admin' %}Admin
+                                            {% else %}Team Member
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                                <a href="{% url 'users:profile' %}" class="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-user mr-3 text-gray-400 group-hover:text-gray-500"></i>
+                                    Profile
+                                </a>
+                                <a href="{% url 'users:team' %}" class="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-users mr-3 text-gray-400 group-hover:text-gray-500"></i>
+                                    Team
+                                </a>
+                                {% if user.is_admin %}
+                                <a href="/admin/" class="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-cogs mr-3 text-gray-400 group-hover:text-gray-500"></i>
+                                    Django Admin
+                                </a>
+                                <a href="{% url 'tasks:admin-task-submissions' %}" class="group flex items-center px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors duration-200 mt-2">
+                                    <i class="fas fa-file-alt mr-3"></i>
+                                    Review Task Submissions
+                                </a>
+                                    <i class="fas fa-cog mr-3 text-gray-400 group-hover:text-gray-500"></i>
+                                    Admin Panel
+                                </a>
+                                {% endif %}
+                                <div class="border-t border-gray-100">
+                                    <a href="{% url 'users:logout' %}" class="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors duration-200">
+                                        <i class="fas fa-sign-out-alt mr-3 text-gray-400 group-hover:text-red-500"></i>
+                                        Sign out
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile menu -->
+        <div class="md:hidden" x-data="{ mobileOpen: false }">
+            <div class="px-4 py-2 border-t border-gray-200">
+                <button @click="mobileOpen = !mobileOpen" class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md transition-colors duration-200">
+                    <span>Menu</span>
+                    <i class="fas fa-chevron-down" :class="{ 'transform rotate-180': mobileOpen }"></i>
+                </button>
+                
+                <div x-show="mobileOpen" x-transition class="mt-2 space-y-1">
+                    <a href="{% url 'users:dashboard' %}" class="block px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md">Dashboard</a>
+                    <a href="{% url 'tasks:task-list' %}" class="block px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md">Tasks</a>
+                    <a href="{% url 'resources:resource-list' %}" class="block px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md">Resources</a>
+                    <a href="{% url 'projects:project-list' %}" class="block px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md">Projects</a>
+                    <a href="{% url 'analytics:dashboard' %}" class="block px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md">Analytics</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main class="{% if user.is_authenticated %}py-6{% else %}{% endif %}">
+        <!-- Messages -->
+        {% if messages %}
+        <div class="{% if user.is_authenticated %}max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6{% else %}fixed top-4 right-4 z-50 max-w-md{% endif %}">
+            {% for message in messages %}
+            <div class="rounded-lg p-4 mb-4 shadow-lg animate-slide-up {% if message.tags == 'error' %}bg-red-50 border-l-4 border-red-400{% elif message.tags == 'warning' %}bg-yellow-50 border-l-4 border-yellow-400{% elif message.tags == 'success' %}bg-green-50 border-l-4 border-green-400{% else %}bg-blue-50 border-l-4 border-blue-400{% endif %}">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        {% if message.tags == 'error' %}
+                            <i class="fas fa-exclamation-circle text-red-400"></i>
+                        {% elif message.tags == 'warning' %}
+                            <i class="fas fa-exclamation-triangle text-yellow-400"></i>
+                        {% elif message.tags == 'success' %}
+                            <i class="fas fa-check-circle text-green-400"></i>
+                        {% else %}
+                            <i class="fas fa-info-circle text-blue-400"></i>
+                        {% endif %}
+                    </div>
+                    <div class="ml-3 flex-1">
+                        <p class="text-sm font-medium {% if message.tags == 'error' %}text-red-800{% elif message.tags == 'warning' %}text-yellow-800{% elif message.tags == 'success' %}text-green-800{% else %}text-blue-800{% endif %}">
+                            {{ message }}
+                        </p>
+                    </div>
+                    <button class="ml-4 flex-shrink-0 text-gray-400 hover:text-gray-600" onclick="this.parentElement.parentElement.remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Page Content -->
+        <div class="{% if user.is_authenticated %}max-w-7xl mx-auto px-4 sm:px-6 lg:px-8{% endif %}">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Footer -->
+    {% if user.is_authenticated %}
+    <footer class="bg-white border-t border-gray-200 mt-12">
+        <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div class="col-span-1 md:col-span-2">
+                    <div class="flex items-center mb-4">
+                        <span class="text-2xl font-bold gradient-text">
+                            <i class="fas fa-users-gear mr-2"></i>TeamLearn
+                        </span>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-4">
+                        Empowering teams to learn, grow, and achieve excellence together. 
+                        Build skills, track progress, and collaborate effectively.
+                    </p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-primary-500 transition-colors duration-200">
+                            <i class="fab fa-github text-lg"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-primary-500 transition-colors duration-200">
+                            <i class="fab fa-linkedin text-lg"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-primary-500 transition-colors duration-200">
+                            <i class="fab fa-twitter text-lg"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-900 tracking-wider uppercase mb-4">Features</h3>
+                    <ul class="space-y-2">
+                        <li><a href="{% url 'tasks:task-list' %}" class="text-gray-600 hover:text-primary-500 text-sm transition-colors duration-200">Task Management</a></li>
+                        <li><a href="{% url 'projects:project-list' %}" class="text-gray-600 hover:text-primary-500 text-sm transition-colors duration-200">Project Tracking</a></li>
+                        <li><a href="{% url 'resources:resource-list' %}" class="text-gray-600 hover:text-primary-500 text-sm transition-colors duration-200">Learning Resources</a></li>
+                        <li><a href="{% url 'analytics:dashboard' %}" class="text-gray-600 hover:text-primary-500 text-sm transition-colors duration-200">Analytics</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-900 tracking-wider uppercase mb-4">Support</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-600 hover:text-primary-500 text-sm transition-colors duration-200">Help Center</a></li>
+                        <li><a href="#" class="text-gray-600 hover:text-primary-500 text-sm transition-colors duration-200">Documentation</a></li>
+                        <li><a href="#" class="text-gray-600 hover:text-primary-500 text-sm transition-colors duration-200">Contact Us</a></li>
+                        <li><a href="#" class="text-gray-600 hover:text-primary-500 text-sm transition-colors duration-200">Community</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="mt-8 pt-6 border-t border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div class="text-sm text-gray-500">
+                        © 2025 TeamLearn Management System. All rights reserved.
+                    </div>
+                    <div class="text-sm text-gray-500">
+                        Made with <i class="fas fa-heart text-red-500"></i> for learning excellence
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+    {% endif %}
+
+    {% block extra_js %}{% endblock %}
+    
+    <!-- Auto-hide messages after 5 seconds -->
+    <script>
+        setTimeout(() => {
+            const messages = document.querySelectorAll('[class*="bg-red-50"], [class*="bg-yellow-50"], [class*="bg-green-50"], [class*="bg-blue-50"]');
+            messages.forEach(message => {
+                if (message.closest('.fixed')) {
+                    message.style.transition = 'opacity 0.5s ease-out';
+                    message.style.opacity = '0';
+                    setTimeout(() => message.remove(), 500);
+                }
+            });
+        }, 5000);
+    </script>
+</body>
+</html>

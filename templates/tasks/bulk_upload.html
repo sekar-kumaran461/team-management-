@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+
+{% block title %}Bulk Task Upload - TeamLearn{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Header -->
+        <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2">
+                        <i class="fas fa-file-excel text-green-600 mr-3"></i>
+                        Bulk Task Upload
+                    </h1>
+                    <p class="text-gray-600">Upload multiple tasks using Excel or CSV files</p>
+                </div>
+                <a href="{% url 'tasks:task-list' %}" 
+                   class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Back to Tasks
+                </a>
+            </div>
+            
+            <!-- Instructions -->
+            <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-8">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-info-circle text-blue-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-lg font-semibold text-blue-900 mb-2">Upload Instructions</h3>
+                        <p class="text-blue-800 mb-4">Your file should contain the following columns:</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <div class="flex items-center">
+                                    <span class="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                                    <strong>title</strong> - Task title (required)
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                                    <strong>description</strong> - Task description
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                                    <strong>task_type</strong> - feature, bug, research, learning, etc.
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                                    <strong>assigned_to_email</strong> - Assignee email (required)
+                                </div>
+                            </div>
+                            <div class="space-y-2">
+                                <div class="flex items-center">
+                                    <span class="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                                    <strong>due_date</strong> - YYYY-MM-DD format (required)
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                                    <strong>priority</strong> - low, medium, high, urgent, critical
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                                    <strong>difficulty</strong> - easy, medium, hard, expert
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                                    <strong>points_value</strong> - Points for completion (default: 10)
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex items-center space-x-4">
+                            <a href="/sample_tasks_import.csv" download 
+                               class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                                <i class="fas fa-download mr-2"></i>
+                                Download CSV Template
+                            </a>
+                            <a href="/sample_tasks_import.htm" target="_blank"
+                               class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200">
+                                <i class="fas fa-eye mr-2"></i>
+                                View Full Guide
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upload Form -->
+        <div class="bg-white rounded-2xl shadow-lg p-8">
+            <form method="post" enctype="multipart/form-data" class="space-y-6">
+                {% csrf_token %}
+                
+                <!-- File Upload -->
+                <div class="space-y-4">
+                    <label class="block text-sm font-medium text-gray-700">
+                        Select File to Upload
+                    </label>
+                    
+                    <!-- Django Form Field for File -->
+                    <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-blue-400 transition-colors duration-200">
+                        <div class="space-y-4">
+                            <div class="mx-auto h-16 w-16 text-gray-400">
+                                <i class="fas fa-cloud-upload-alt text-4xl"></i>
+                            </div>
+                            <div class="space-y-2">
+                                <p class="text-xl font-medium text-gray-900">Select your file</p>
+                                <p class="text-gray-500">CSV, Excel (.xlsx) files supported</p>
+                            </div>
+                            <div class="flex justify-center">
+                                {{ form.file }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- File Type Selection -->
+                <div class="space-y-4">
+                    <label class="block text-sm font-medium text-gray-700">
+                        File Type
+                    </label>
+                    <div class="flex space-x-4">
+                        {{ form.file_type }}
+                    </div>
+                </div>
+
+                <!-- Upload Options -->
+                <div class="space-y-4">
+                    <div class="flex items-center">
+                        {{ form.skip_duplicates }}
+                        <label for="{{ form.skip_duplicates.id_for_label }}" class="ml-2 block text-sm text-gray-700">
+                            Skip duplicate tasks (based on title)
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex justify-between items-center pt-6 border-t border-gray-200">
+                    <div class="text-sm text-gray-500">
+                        <i class="fas fa-shield-alt mr-1"></i>
+                        Your data is processed securely
+                    </div>
+                    <div class="flex space-x-3">
+                        <a href="{% url 'tasks:task-list' %}" 
+                           class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                            Cancel
+                        </a>
+                        <button type="submit" 
+                                class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                            <i class="fas fa-upload mr-2"></i>
+                            Upload Tasks
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,793 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ task.title }} - Task Details{% endblock %}
+
+{% block extra_css %}
+<style>
+    .task-progress-bar {
+        background: linear-gradient(90deg, #10b981 {{ task.progress_percentage }}%, #e5e7eb {{ task.progress_percentage }}%);
+    }
+    .submission-form-container {
+        display: none;
+    }
+    .submission-form-container.active {
+        display: block;
+    }
+    .fade-in {
+        animation: fadeIn 0.3s ease-in;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header Section -->
+    <div class="bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="py-6">
+                <!-- Breadcrumb -->
+                <nav class="flex items-center space-x-2 text-sm text-gray-500 mb-4">
+                    <a href="{% url 'tasks:task-list' %}" class="hover:text-gray-700">Tasks</a>
+                    <i class="fas fa-chevron-right text-xs"></i>
+                    {% if task.category %}
+                    <a href="{% url 'tasks:task-list' %}?category={{ task.category.id }}" class="hover:text-gray-700">{{ task.category.name }}</a>
+                    <i class="fas fa-chevron-right text-xs"></i>
+                    {% endif %}
+                    <span class="text-gray-900">{{ task.title|truncatechars:50 }}</span>
+                </nav>
+
+                <!-- Task Header -->
+                <div class="flex items-start justify-between">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center space-x-3 mb-2">
+                            <h1 class="text-2xl font-bold text-gray-900 truncate">{{ task.title }}</h1>
+                            
+                            <!-- Status Badge -->
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                {% if task.status == 'completed' %}bg-green-100 text-green-800
+                                {% elif task.status == 'in_progress' %}bg-blue-100 text-blue-800
+                                {% elif task.status == 'review' %}bg-yellow-100 text-yellow-800
+                                {% elif task.status == 'blocked' %}bg-red-100 text-red-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                <i class="fas 
+                                    {% if task.status == 'completed' %}fa-check-circle
+                                    {% elif task.status == 'in_progress' %}fa-play-circle
+                                    {% elif task.status == 'review' %}fa-eye
+                                    {% elif task.status == 'blocked' %}fa-exclamation-triangle
+                                    {% else %}fa-circle{% endif %} mr-1"></i>
+                                {{ task.get_status_display }}
+                            </span>
+
+                            <!-- Priority Badge -->
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                {% if task.priority == 'critical' %}bg-red-100 text-red-800
+                                {% elif task.priority == 'urgent' %}bg-orange-100 text-orange-800
+                                {% elif task.priority == 'high' %}bg-yellow-100 text-yellow-800
+                                {% elif task.priority == 'medium' %}bg-blue-100 text-blue-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                <i class="fas fa-flag mr-1"></i>
+                                {{ task.get_priority_display }}
+                            </span>
+                        </div>
+
+                        <!-- Task Meta Info -->
+                        <div class="flex items-center space-x-6 text-sm text-gray-500">
+                            <div class="flex items-center">
+                                <i class="fas fa-user-circle mr-1"></i>
+                                <span>Created by <strong>{{ task.created_by.get_full_name|default:task.created_by.username }}</strong></span>
+                            </div>
+                            {% if task.assigned_to %}
+                            <div class="flex items-center">
+                                <i class="fas fa-user-tag mr-1"></i>
+                                <span>Assigned to <strong>{{ task.assigned_to.get_full_name|default:task.assigned_to.username }}</strong></span>
+                            </div>
+                            {% elif task.assigned_to_all %}
+                            <div class="flex items-center">
+                                <i class="fas fa-users mr-1"></i>
+                                <span>Assigned to <strong>All Team Members</strong></span>
+                            </div>
+                            {% endif %}
+                            <div class="flex items-center">
+                                <i class="fas fa-calendar mr-1"></i>
+                                <span>Created {{ task.created_at|date:"M d, Y" }}</span>
+                            </div>
+                            {% if task.due_date %}
+                            <div class="flex items-center {% if task.is_overdue %}text-red-600{% endif %}">
+                                <i class="fas fa-clock mr-1"></i>
+                                <span>Due {{ task.due_date|date:"M d, Y \a\t g:i A" }}</span>
+                                {% if task.is_overdue %}
+                                <i class="fas fa-exclamation-triangle ml-1 text-red-500"></i>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex items-center space-x-3 ml-4">
+                        {% if can_submit %}
+                        <button 
+                            onclick="toggleSubmissionForm()"
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                        >
+                            <i class="fas fa-paper-plane mr-2"></i>
+                            {% if user_submission %}Update Submission{% else %}Submit Task{% endif %}
+                        </button>
+                        {% endif %}
+                        
+                        {% if can_edit %}
+                        <a href="{% url 'tasks:task-edit' task.id %}" 
+                           class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors">
+                            <i class="fas fa-edit mr-2"></i>
+                            Edit Task
+                        </a>
+                        {% endif %}
+                        
+                        <div class="relative inline-block text-left">
+                            <button type="button" onclick="toggleDropdown('task-options')" 
+                                    class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors">
+                                <i class="fas fa-ellipsis-h"></i>
+                            </button>
+                            <div id="task-options" class="hidden origin-top-right absolute right-0 mt-2 w-48 rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                                <div class="py-1">
+                                    {% if can_clone_task %}
+                                    <a href="{% url 'tasks:clone-task' task.id %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        <i class="fas fa-copy mr-2"></i>Clone Task
+                                    </a>
+                                    {% endif %}
+                                    <a href="{% url 'tasks:recurring-tasks' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        <i class="fas fa-sync-alt mr-2"></i>Recurring Tasks
+                                    </a>
+                                    <a href="#" onclick="printTask()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        <i class="fas fa-print mr-2"></i>Print
+                                    </a>
+                                    <a href="#" onclick="shareTask()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        <i class="fas fa-share mr-2"></i>Share
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column - Main Content -->
+            <div class="lg:col-span-2 space-y-8">
+                <!-- Task Description -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-file-alt text-blue-600 mr-2"></i>
+                        Description
+                    </h2>
+                    <div class="prose max-w-none text-gray-700">
+                        {{ task.description|linebreaks }}
+                    </div>
+                </div>
+
+                <!-- Acceptance Criteria -->
+                {% if task.acceptance_criteria %}
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-check-double text-green-600 mr-2"></i>
+                        Acceptance Criteria
+                    </h2>
+                    <div class="prose max-w-none text-gray-700">
+                        {{ task.acceptance_criteria|linebreaks }}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Submission Form Container -->
+                <div class="submission-form-container" id="submission-form-container">
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <div class="flex items-center space-x-3">
+                                <div class="flex-shrink-0">
+                                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-upload text-blue-600"></i>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-900">Submit Your Work</h3>
+                                    <p class="text-sm text-gray-600">Upload files and provide submission details</p>
+                                </div>
+                            </div>
+                            {% if user_submission %}
+                            <div class="flex items-center space-x-2 text-sm">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    <i class="fas fa-check-circle mr-1"></i>
+                                    Previously Submitted
+                                </span>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Previous Submission Alert -->
+                        {% if user_submission %}
+                        <div class="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-info-circle text-amber-600 mt-0.5"></i>
+                                </div>
+                                <div class="ml-3">
+                                    <h4 class="text-sm font-medium text-amber-800">Previous Submission Found</h4>
+                                    <p class="text-sm text-amber-700 mt-1">
+                                        You submitted this task on {{ user_submission.submitted_at|date:"M d, Y \a\t g:i A" }}.
+                                        You can update your submission below.
+                                    </p>
+                                    {% if user_submission.review_notes %}
+                                    <div class="mt-3 p-3 bg-white rounded border border-amber-200">
+                                        <p class="text-sm font-medium text-gray-900">Review Notes:</p>
+                                        <p class="text-sm text-gray-700 mt-1">{{ user_submission.review_notes }}</p>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Submission Form -->
+                        <form method="post" enctype="multipart/form-data" action="{% url 'tasks:submit-task' task.id %}" class="space-y-6">
+                            {% csrf_token %}
+                            <input type="hidden" name="inline_submission" value="1">
+                            
+                            <!-- Submission Title -->
+                            <div>
+                                <label for="submission_title" class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-heading text-gray-400 mr-1"></i>
+                                    Submission Title
+                                </label>
+                                <input 
+                                    type="text" 
+                                    name="title" 
+                                    id="submission_title" 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    placeholder="Enter a title for your submission..."
+                                    value="{% if user_submission %}{{ user_submission.title }}{% else %}{{ task.title }} - Solution{% endif %}"
+                                    required
+                                >
+                            </div>
+
+                            <!-- Submission Description -->
+                            <div>
+                                <label for="submission_description" class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-align-left text-gray-400 mr-1"></i>
+                                    Description
+                                </label>
+                                <textarea 
+                                    name="description" 
+                                    id="submission_description" 
+                                    rows="3"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                                    placeholder="Describe your approach and solution..."
+                                    required
+                                >{% if user_submission %}{{ user_submission.description }}{% endif %}</textarea>
+                            </div>
+
+                            <!-- Submission Type -->
+                            <div>
+                                <label for="submission_type" class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-layer-group text-gray-400 mr-1"></i>
+                                    Submission Type
+                                </label>
+                                <select 
+                                    name="submission_type" 
+                                    id="submission_type"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                >
+                                    <option value="code" {% if user_submission.submission_type == 'code' %}selected{% endif %}>Code/Repository</option>
+                                    <option value="document" {% if user_submission.submission_type == 'document' %}selected{% endif %}>Document</option>
+                                    <option value="design" {% if user_submission.submission_type == 'design' %}selected{% endif %}>Design Files</option>
+                                    <option value="video" {% if user_submission.submission_type == 'video' %}selected{% endif %}>Video Demo</option>
+                                    <option value="link" {% if user_submission.submission_type == 'link' %}selected{% endif %}>External Link</option>
+                                    <option value="other" {% if user_submission.submission_type == 'other' %}selected{% endif %}>Other</option>
+                                </select>
+                            </div>
+
+                            <!-- File Upload -->
+                            <div>
+                                <label for="submission_file" class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-paperclip text-gray-400 mr-1"></i>
+                                    Upload File (Optional)
+                                </label>
+                                <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+                                    <div class="space-y-2">
+                                        <i class="fas fa-cloud-upload-alt text-3xl text-gray-400"></i>
+                                        <div>
+                                            <label for="submission_file" class="cursor-pointer">
+                                                <span class="text-sm font-medium text-blue-600 hover:text-blue-500">Upload a file</span>
+                                                <input 
+                                                    type="file" 
+                                                    name="file" 
+                                                    id="submission_file" 
+                                                    class="hidden"
+                                                    accept=".pdf,.doc,.docx,.txt,.zip,.rar,.jpg,.jpeg,.png,.gif,.mp4,.mov,.avi,.py,.js,.html,.css"
+                                                >
+                                            </label>
+                                            <span class="text-sm text-gray-500">or drag and drop</span>
+                                        </div>
+                                        <p class="text-xs text-gray-500">
+                                            Supported: PDF, DOC, DOCX, TXT, ZIP, RAR, Images, Videos, Code Files (Max 10MB)
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <!-- File Preview Area -->
+                                <div id="file-preview" class="mt-3 space-y-2 hidden">
+                                    <p class="text-sm font-medium text-gray-700">Selected File:</p>
+                                    <div id="file-info" class="py-2 px-3 bg-white rounded border border-gray-200"></div>
+                                </div>
+                            </div>
+
+                            <!-- External URL Option -->
+                            <div>
+                                <label for="external_url" class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-link text-gray-400 mr-1"></i>
+                                    External URL (Optional)
+                                </label>
+                                <input 
+                                    type="url" 
+                                    name="external_url" 
+                                    id="external_url" 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    placeholder="https://github.com/username/repo or https://drive.google.com/..."
+                                    value="{% if user_submission %}{{ user_submission.external_url }}{% endif %}"
+                                >
+                                <p class="mt-1 text-xs text-gray-500">Link to GitHub repository, Google Drive, or other external resource</p>
+                            </div>
+
+                            <!-- Additional Notes -->
+                            <div>
+                                <label for="submission_notes" class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-comment text-gray-400 mr-1"></i>
+                                    Additional Notes (Optional)
+                                </label>
+                                <textarea 
+                                    name="notes" 
+                                    id="submission_notes" 
+                                    rows="2"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                                    placeholder="Any additional notes, challenges faced, or comments for the reviewer..."
+                                >{% if user_submission %}{{ user_submission.notes }}{% endif %}</textarea>
+                            </div>
+
+                            <!-- Submission Actions -->
+                            <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+                                <div class="flex items-center space-x-4">
+                                    <span class="text-sm text-gray-600">
+                                        <i class="fas fa-info-circle mr-1"></i>
+                                        Your submission will be reviewed by the task reviewer
+                                    </span>
+                                </div>
+                                
+                                <div class="flex items-center space-x-3">
+                                    <button 
+                                        type="button" 
+                                        onclick="closeSubmissionForm()"
+                                        class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button 
+                                        type="submit"
+                                        class="px-6 py-2 bg-blue-600 border border-transparent rounded-lg text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors flex items-center"
+                                        id="submit-btn"
+                                    >
+                                        <i class="fas fa-paper-plane mr-2"></i>
+                                        {% if user_submission %}Update Submission{% else %}Submit Task{% endif %}
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Submissions Section -->
+                {% if submissions %}
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                        <i class="fas fa-inbox text-purple-600 mr-2"></i>
+                        Submissions ({{ submissions|length }})
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        {% for submission in submissions %}
+                        <div class="border border-gray-200 rounded-lg p-4 {% if submission.submitted_by == user %}bg-blue-50 border-blue-200{% endif %}">
+                            <div class="flex items-start justify-between mb-3">
+                                <div class="flex items-center space-x-3">
+                                    <div class="flex-shrink-0">
+                                        <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                                            <i class="fas fa-user text-gray-600 text-sm"></i>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">
+                                            {{ submission.submitted_by.get_full_name|default:submission.submitted_by.username }}
+                                            {% if submission.submitted_by == user %}(You){% endif %}
+                                        </p>
+                                        <p class="text-xs text-gray-500">{{ submission.submitted_at|date:"M d, Y \a\t g:i A" }}</p>
+                                    </div>
+                                </div>
+                                
+                                {% if submission.is_reviewed %}
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+                                    {% if submission.grade and submission.grade >= 70 %}bg-green-100 text-green-800
+                                    {% elif submission.grade %}bg-yellow-100 text-yellow-800
+                                    {% else %}bg-blue-100 text-blue-800{% endif %}">
+                                    {% if submission.grade %}
+                                        Grade: {{ submission.grade }}/100
+                                    {% else %}
+                                        Reviewed
+                                    {% endif %}
+                                </span>
+                                {% else %}
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                    Pending Review
+                                </span>
+                                {% endif %}
+                            </div>
+                            
+                            {% if submission.notes %}
+                            <div class="mb-3">
+                                <p class="text-sm text-gray-700">{{ submission.notes }}</p>
+                            </div>
+                            {% endif %}
+                            
+                            {% if submission.file %}
+                            <div class="mb-3">
+                                <a href="{{ submission.file.url }}" target="_blank" 
+                                   class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors">
+                                    <i class="fas fa-file mr-1"></i>
+                                    View Submission File
+                                </a>
+                            </div>
+                            {% endif %}
+                            
+                            {% if submission.external_url %}
+                            <div class="mb-3">
+                                <a href="{{ submission.external_url }}" target="_blank" 
+                                   class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors">
+                                    <i class="fas fa-external-link-alt mr-1"></i>
+                                    External Link
+                                </a>
+                            </div>
+                            {% endif %}
+                            
+                            {% if submission.review_notes %}
+                            <div class="mt-3 p-3 bg-gray-50 rounded border-l-4 border-blue-500">
+                                <p class="text-sm font-medium text-gray-900">Review Notes:</p>
+                                <p class="text-sm text-gray-700 mt-1">{{ submission.review_notes }}</p>
+                                {% if submission.grade %}
+                                <p class="text-sm font-medium text-gray-900 mt-2">Grade: <span class="text-green-600">{{ submission.grade }}/100</span></p>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Comments Section -->
+                {% if task.comments.exists %}
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                        <i class="fas fa-comments text-blue-600 mr-2"></i>
+                        Comments ({{ task.comments.count }})
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        {% for comment in task.comments.all %}
+                        <div class="flex space-x-3">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-user text-gray-600 text-sm"></i>
+                                </div>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-2">
+                                    <p class="text-sm font-medium text-gray-900">
+                                        {{ comment.user.get_full_name|default:comment.user.username }}
+                                    </p>
+                                    <p class="text-xs text-gray-500">{{ comment.created_at|date:"M d, Y \a\t g:i A" }}</p>
+                                </div>
+                                <p class="text-sm text-gray-700 mt-1">{{ comment.content }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Right Column - Sidebar -->
+            <div class="space-y-6">
+                <!-- Progress Card -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-chart-pie text-green-600 mr-2"></i>
+                        Progress
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        <!-- Progress Bar -->
+                        <div>
+                            <div class="flex justify-between text-sm text-gray-600 mb-1">
+                                <span>Completion</span>
+                                <span>{{ task.progress_percentage }}%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-green-500 h-2 rounded-full" style="width: {{ task.progress_percentage }}%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Time Tracking -->
+                        <div class="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200">
+                            <div class="text-center">
+                                <p class="text-lg font-semibold text-gray-900">{{ task.estimated_hours }}h</p>
+                                <p class="text-xs text-gray-500">Estimated</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-lg font-semibold text-gray-900">{{ task.actual_hours }}h</p>
+                                <p class="text-xs text-gray-500">Actual</p>
+                            </div>
+                        </div>
+
+                        {% if task.due_date %}
+                        <div class="pt-4 border-t border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-600">Days remaining:</span>
+                                <span class="text-sm font-medium {% if progress_data.days_remaining < 0 %}text-red-600{% elif progress_data.days_remaining <= 3 %}text-yellow-600{% else %}text-green-600{% endif %}">
+                                    {% if progress_data.days_remaining < 0 %}
+                                        {{ progress_data.days_remaining|add:"-1" }} days overdue
+                                    {% else %}
+                                        {{ progress_data.days_remaining }} days
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Task Details Card -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-info-circle text-blue-600 mr-2"></i>
+                        Details
+                    </h3>
+                    
+                    <div class="space-y-3">
+                        {% if task.category %}
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Category:</span>
+                            <span class="text-sm font-medium text-gray-900 flex items-center">
+                                {% if task.category.icon %}
+                                <i class="{{ task.category.icon }} mr-1" style="color: {{ task.category.color }}"></i>
+                                {% endif %}
+                                {{ task.category.name }}
+                            </span>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Type:</span>
+                            <span class="text-sm font-medium text-gray-900">{{ task.get_task_type_display }}</span>
+                        </div>
+                        
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Difficulty:</span>
+                            <span class="text-sm font-medium text-gray-900">{{ task.get_difficulty_display }}</span>
+                        </div>
+                        
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Points:</span>
+                            <span class="text-sm font-medium text-gray-900">{{ task.points_value }}</span>
+                        </div>
+                        
+                        {% if task.reviewer %}
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Reviewer:</span>
+                            <span class="text-sm font-medium text-gray-900">{{ task.reviewer.get_full_name|default:task.reviewer.username }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Skills & Technologies -->
+                {% if task.required_skills.exists or task.technologies.exists %}
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-tools text-purple-600 mr-2"></i>
+                        Skills & Tech
+                    </h3>
+                    
+                    {% if task.required_skills.exists %}
+                    <div class="mb-4">
+                        <p class="text-sm font-medium text-gray-700 mb-2">Required Skills:</p>
+                        <div class="flex flex-wrap gap-2">
+                            {% for skill in task.required_skills.all %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                {{ skill.name }}
+                            </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if task.technologies.exists %}
+                    <div>
+                        <p class="text-sm font-medium text-gray-700 mb-2">Technologies:</p>
+                        <div class="flex flex-wrap gap-2">
+                            {% for tech in task.technologies.all %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                {{ tech.name }}
+                            </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <!-- Tags -->
+                {% if task.tags.exists %}
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-tags text-yellow-600 mr-2"></i>
+                        Tags
+                    </h3>
+                    
+                    <div class="flex flex-wrap gap-2">
+                        {% for tag in task.tags.all %}
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                            <i class="fas fa-tag mr-1"></i>
+                            {{ tag.name }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Subtasks -->
+                {% if task.subtasks.exists %}
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-list text-indigo-600 mr-2"></i>
+                        Subtasks ({{ task.subtasks.count }})
+                    </h3>
+                    
+                    <div class="space-y-3">
+                        {% for subtask in task.subtasks.all %}
+                        <div class="flex items-center space-x-3">
+                            <div class="flex-shrink-0">
+                                {% if subtask.status == 'completed' %}
+                                <i class="fas fa-check-circle text-green-500"></i>
+                                {% else %}
+                                <i class="far fa-circle text-gray-400"></i>
+                                {% endif %}
+                            </div>
+                            <div class="flex-1">
+                                <a href="{% url 'tasks:task-detail' subtask.id %}" 
+                                   class="text-sm text-gray-900 hover:text-blue-600 {% if subtask.status == 'completed' %}line-through{% endif %}">
+                                    {{ subtask.title }}
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+function toggleSubmissionForm() {
+    const container = document.getElementById('submission-form-container');
+    container.classList.toggle('active');
+    if (container.classList.contains('active')) {
+        container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        container.classList.add('fade-in');
+    }
+}
+
+function closeSubmissionForm() {
+    const container = document.getElementById('submission-form-container');
+    container.classList.remove('active');
+}
+
+function toggleDropdown(id) {
+    const dropdown = document.getElementById(id);
+    dropdown.classList.toggle('hidden');
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+        if (!event.target.closest(`#${id}`) && !event.target.closest('button')) {
+            dropdown.classList.add('hidden');
+        }
+    });
+}
+
+function printTask() {
+    window.print();
+}
+
+function shareTask() {
+    if (navigator.share) {
+        navigator.share({
+            title: '{{ task.title }}',
+            text: 'Check out this task: {{ task.title }}',
+            url: window.location.href
+        });
+    } else {
+        // Fallback: copy to clipboard
+        navigator.clipboard.writeText(window.location.href).then(() => {
+            alert('Task URL copied to clipboard!');
+        });
+    }
+}
+
+// File upload handling for submission form
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('submission_file');
+    const filePreview = document.getElementById('file-preview');
+    const fileInfo = document.getElementById('file-info');
+    const submitBtn = document.getElementById('submit-btn');
+
+    if (fileInput) {
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            
+            if (file) {
+                filePreview.classList.remove('hidden');
+                
+                fileInfo.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-file text-blue-500"></i>
+                        <span class="text-sm text-gray-900">${file.name}</span>
+                        <span class="text-xs text-gray-500">(${(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                    </div>
+                `;
+            } else {
+                filePreview.classList.add('hidden');
+            }
+        });
+    }
+
+    // Form submission handling
+    const submissionForm = document.querySelector('#submission-form-container form');
+    if (submissionForm && submitBtn) {
+        submissionForm.addEventListener('submit', function(e) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Submitting...';
+        });
+    }
+
+    // Auto-hide alerts after 5 seconds
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(alert => {
+        setTimeout(() => {
+            alert.style.transition = 'opacity 0.5s';
+            alert.style.opacity = '0';
+            setTimeout(() => alert.remove(), 500);
+        }, 5000);
+    });
+});
+</script>
+{% endblock %}
+
+{% block extra_js %}
+{% endblock %}

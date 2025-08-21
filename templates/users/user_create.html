@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create User - TeamLearn{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-12">
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-primary-100 rounded-full mb-4">
+                <i class="fas fa-user-plus text-2xl text-primary-600"></i>
+            </div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Create New User</h1>
+            <p class="text-lg text-gray-600">Add a new team member to the system</p>
+        </div>
+
+        <!-- Breadcrumb -->
+        <nav class="mb-8">
+            <ol class="flex items-center space-x-4">
+                <li>
+                    <a href="{% url 'users:user-management' %}" class="text-primary-600 hover:text-primary-700 transition-colors duration-200">
+                        <i class="fas fa-users mr-2"></i>User Management
+                    </a>
+                </li>
+                <li class="flex items-center">
+                    <i class="fas fa-chevron-right mx-3 text-gray-400"></i>
+                    <span class="text-gray-500">Create User</span>
+                </li>
+            </ol>
+        </nav>
+
+        <!-- Form -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                
+                <!-- Personal Information -->
+                <div class="border-b border-gray-200 pb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Personal Information</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="id_first_name" class="block text-sm font-medium text-gray-700 mb-2">
+                                First Name *
+                            </label>
+                            {{ form.first_name }}
+                        </div>
+                        <div>
+                            <label for="id_last_name" class="block text-sm font-medium text-gray-700 mb-2">
+                                Last Name *
+                            </label>
+                            {{ form.last_name }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Account Information -->
+                <div class="border-b border-gray-200 pb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Account Information</h3>
+                    <div class="space-y-6">
+                        <div>
+                            <label for="id_email" class="block text-sm font-medium text-gray-700 mb-2">
+                                Email Address *
+                            </label>
+                            {{ form.email }}
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="id_password1" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Password *
+                                </label>
+                                {{ form.password1 }}
+                            </div>
+                            <div>
+                                <label for="id_password2" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Confirm Password *
+                                </label>
+                                {{ form.password2 }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Role and Permissions -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Role and Permissions</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="id_role" class="block text-sm font-medium text-gray-700 mb-2">
+                                Role *
+                            </label>
+                            {{ form.role }}
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" name="is_active" id="id_is_active" checked class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                            <label for="id_is_active" class="ml-2 text-sm font-medium text-gray-700">
+                                Active User
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Errors -->
+                {% if form.errors %}
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div class="flex">
+                        <i class="fas fa-exclamation-circle text-red-400 mr-3 mt-0.5"></i>
+                        <div>
+                            <h3 class="text-sm font-medium text-red-800">Please correct the following errors:</h3>
+                            <ul class="mt-2 text-sm text-red-700 list-disc list-inside">
+                                {% for field, errors in form.errors.items %}
+                                    {% for error in errors %}
+                                        <li>{{ field|capfirst }}: {{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Action Buttons -->
+                <div class="flex items-center justify-between pt-6">
+                    <a href="{% url 'users:user-management' %}" class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors duration-300">
+                        <i class="fas fa-arrow-left mr-2"></i>Cancel
+                    </a>
+                    
+                    <button type="submit" class="px-8 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg font-medium hover:from-primary-700 hover:to-primary-800 transform hover:scale-105 transition-all duration-300 shadow-lg">
+                        <i class="fas fa-user-plus mr-2"></i>Create User
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}File Preview{% endblock %}
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold mb-6">File Preview for Submission #{{ submission.id }}</h1>
+    <div class="bg-white rounded-xl shadow p-6">
+        <h2 class="text-lg font-semibold mb-2">Task: {{ submission.task.title }}</h2>
+        <h3 class="text-md mb-4">Submitted by: {{ submission.submitted_by.get_full_name|default:submission.submitted_by.username }}</h3>
+        <div class="mb-6">
+            <strong>File:</strong>
+            {% if submission.file_path %}
+                <div class="text-xs text-gray-400 mb-2">File path: {{ submission.file_path }}<br>Full URL: {{ MEDIA_URL }}{{ submission.file_path }}</div>
+                <a href="{{ MEDIA_URL }}{{ submission.file_path }}" download class="text-blue-600 underline">Download/View</a>
+                <br>
+                {% with ext=submission.file_path|lower|slice:"-4:" %}
+                    {% if ext == '.png' or ext == '.jpg' or ext == 'jpeg' or ext == '.gif' %}
+                        <img src="{{ MEDIA_URL }}{{ submission.file_path }}" alt="Preview" class="mt-4 max-w-lg rounded shadow">
+                    {% elif ext == '.pdf' %}
+                        <iframe src="{{ MEDIA_URL }}{{ submission.file_path }}" class="w-full h-96 mt-4 border rounded" frameborder="0"></iframe>
+                    {% elif ext == '.txt' %}
+                        <iframe src="{{ MEDIA_URL }}{{ submission.file_path }}" class="w-full h-96 mt-4 border rounded" frameborder="0"></iframe>
+                    {% else %}
+                        <span class="text-gray-500">Preview not available. Please use the download link above.</span>
+                    {% endif %}
+                {% endwith %}
+            {% else %}
+                <span class="text-gray-500">No file uploaded.</span>
+            {% endif %}
+        </div>
+        <a href="{% url 'tasks:admin-task-submissions' %}" class="bg-blue-600 text-white px-4 py-2 rounded">Back to Submissions</a>
+    </div>
+</div>
+{% endblock %}

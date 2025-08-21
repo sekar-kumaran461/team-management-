@@ -1,0 +1,281 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Time Log - {{ task.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .timer-display {
+        font-family: 'Courier New', monospace;
+        font-size: 2rem;
+        font-weight: bold;
+    }
+    .timer-active {
+        color: #10b981;
+        animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+            <nav class="flex items-center space-x-2 text-sm text-gray-500 mb-4">
+                <a href="{% url 'tasks:task-list' %}" class="hover:text-gray-700">Tasks</a>
+                <i class="fas fa-chevron-right text-xs"></i>
+                <a href="{% url 'tasks:task-detail' task.id %}" class="hover:text-gray-700">{{ task.title|truncatechars:50 }}</a>
+                <i class="fas fa-chevron-right text-xs"></i>
+                <span class="text-gray-900">Time Log</span>
+            </nav>
+            
+            <div class="flex items-start justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900 mb-2">Time Tracking</h1>
+                    <p class="text-gray-600">Track time spent working on this task</p>
+                </div>
+                <a href="{% url 'tasks:task-detail' task.id %}" 
+                   class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Back to Task
+                </a>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Left Column - Timer & Manual Entry -->
+            <div class="lg:col-span-1 space-y-6">
+                
+                <!-- Active Timer -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-stopwatch text-blue-600 mr-2"></i>
+                        Timer
+                    </h2>
+                    
+                    {% if active_timer %}
+                    <div class="text-center mb-6">
+                        <div class="timer-display timer-active" id="timer-display">
+                            00:00:00
+                        </div>
+                        <p class="text-sm text-gray-600 mt-2">Timer running since {{ active_timer.start_time|date:"g:i A" }}</p>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="stop_timer">
+                            <button type="submit" 
+                                    class="w-full inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 transition-colors">
+                                <i class="fas fa-stop mr-2"></i>
+                                Stop Timer
+                            </button>
+                        </form>
+                    </div>
+                    {% else %}
+                    <div class="text-center mb-6">
+                        <div class="timer-display text-gray-400">
+                            00:00:00
+                        </div>
+                        <p class="text-sm text-gray-600 mt-2">Timer not running</p>
+                    </div>
+                    
+                    <form method="post" class="space-y-4">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="start_timer">
+                        
+                        <div>
+                            <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
+                                What are you working on? (Optional)
+                            </label>
+                            <textarea name="description" id="description" rows="2"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    placeholder="Describe your work..."></textarea>
+                        </div>
+                        
+                        <button type="submit" 
+                                class="w-full inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 transition-colors">
+                            <i class="fas fa-play mr-2"></i>
+                            Start Timer
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+
+                <!-- Manual Time Entry -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-edit text-purple-600 mr-2"></i>
+                        Manual Entry
+                    </h2>
+                    
+                    <form method="post" class="space-y-4">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="add_manual">
+                        
+                        <div>
+                            <label for="manual_duration" class="block text-sm font-medium text-gray-700 mb-2">
+                                Duration (minutes)
+                            </label>
+                            <input type="number" name="manual_duration" id="manual_duration" min="1" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                   placeholder="60" required>
+                        </div>
+                        
+                        <div>
+                            <label for="manual_description" class="block text-sm font-medium text-gray-700 mb-2">
+                                Description
+                            </label>
+                            <textarea name="manual_description" id="manual_description" rows="2"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                    placeholder="What did you work on?"></textarea>
+                        </div>
+                        
+                        <button type="submit" 
+                                class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-purple-600 hover:bg-purple-700 transition-colors">
+                            <i class="fas fa-plus mr-2"></i>
+                            Add Time Entry
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Time Summary -->
+                <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg shadow-sm p-6 text-white">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center">
+                        <i class="fas fa-clock mr-2"></i>
+                        Your Total Time
+                    </h2>
+                    
+                    <div class="text-center">
+                        <div class="text-3xl font-bold mb-2">{{ total_time_hours }}h</div>
+                        <div class="text-blue-100">{{ total_time_minutes }} minutes total</div>
+                    </div>
+                    
+                    {% if task.estimated_hours %}
+                    <div class="mt-4 pt-4 border-t border-blue-400">
+                        <div class="flex justify-between text-sm">
+                            <span>Estimated:</span>
+                            <span>{{ task.estimated_hours }}h</span>
+                        </div>
+                        {% if total_time_hours > 0 %}
+                        <div class="flex justify-between text-sm mt-1">
+                            <span>Progress:</span>
+                            <span>{{ total_time_hours|floatformat:1 }}/{{ task.estimated_hours }}h</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Right Column - Time Log History -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                    <div class="p-6 border-b border-gray-200">
+                        <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                            <i class="fas fa-history text-green-600 mr-2"></i>
+                            Time Log History
+                        </h2>
+                    </div>
+                    
+                    {% if user_time_logs %}
+                    <div class="divide-y divide-gray-200">
+                        {% for log in user_time_logs %}
+                        <div class="p-6 hover:bg-gray-50 transition-colors">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-4 mb-2">
+                                        <div class="flex items-center text-sm text-gray-600">
+                                            <i class="fas fa-calendar mr-1"></i>
+                                            {{ log.start_time|date:"M d, Y" }}
+                                        </div>
+                                        <div class="flex items-center text-sm text-gray-600">
+                                            <i class="fas fa-clock mr-1"></i>
+                                            {{ log.start_time|date:"g:i A" }}
+                                            {% if log.end_time %}
+                                                - {{ log.end_time|date:"g:i A" }}
+                                            {% else %}
+                                                - <span class="text-green-600 font-medium">Running</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="flex items-center">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                <i class="fas fa-stopwatch mr-1"></i>
+                                                {{ log.duration_minutes }} min
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    {% if log.description %}
+                                    <p class="text-sm text-gray-700 bg-gray-50 rounded p-2 mt-2">
+                                        {{ log.description }}
+                                    </p>
+                                    {% else %}
+                                    <p class="text-sm text-gray-500 italic">No description provided</p>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="text-right">
+                                    {% if not log.end_time %}
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        <i class="fas fa-play mr-1"></i>
+                                        Active
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="p-12 text-center">
+                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-stopwatch text-gray-400 text-2xl"></i>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">No Time Logged Yet</h3>
+                        <p class="text-gray-600 mb-4">Start tracking your time by using the timer or adding manual entries.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% if active_timer %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const startTime = new Date('{{ active_timer.start_time|date:"c" }}');
+    const timerDisplay = document.getElementById('timer-display');
+    
+    function updateTimer() {
+        const now = new Date();
+        const elapsed = Math.floor((now - startTime) / 1000);
+        
+        const hours = Math.floor(elapsed / 3600);
+        const minutes = Math.floor((elapsed % 3600) / 60);
+        const seconds = elapsed % 60;
+        
+        const timeString = 
+            String(hours).padStart(2, '0') + ':' +
+            String(minutes).padStart(2, '0') + ':' +
+            String(seconds).padStart(2, '0');
+        
+        timerDisplay.textContent = timeString;
+    }
+    
+    // Update timer immediately and then every second
+    updateTimer();
+    setInterval(updateTimer, 1000);
+});
+</script>
+{% endif %}
+{% endblock %}

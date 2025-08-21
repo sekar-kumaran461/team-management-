@@ -1,0 +1,409 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Task - TeamLearn{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background-size: 200% 200%;
+        animation: gradientShift 8s ease infinite;
+    }
+    
+    @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .form-input:focus {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(99, 102, 241, 0.15);
+    }
+    
+    .priority-badge {
+        transition: all 0.3s ease;
+    }
+    
+    .priority-badge:hover {
+        transform: scale(1.05);
+    }
+    
+    .file-drop-zone {
+        border: 2px dashed #d1d5db;
+        transition: all 0.3s ease;
+    }
+    
+    .file-drop-zone.dragover {
+        border-color: #6366f1;
+        background-color: #f0f9ff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen form-section py-12">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-white rounded-full shadow-lg mb-4">
+                <i class="fas fa-plus text-2xl text-primary-600"></i>
+            </div>
+            <h1 class="text-4xl font-bold text-white mb-2">Create New Task</h1>
+            <p class="text-xl text-white opacity-90 mb-4">Add a new task to track progress and collaborate</p>
+            
+            <!-- Quick Links -->
+            <div class="flex justify-center space-x-4 mb-4">
+                <a href="{% url 'tasks:recurring-tasks' %}" 
+                   class="inline-flex items-center px-4 py-2 bg-white bg-opacity-20 text-white rounded-lg font-medium hover:bg-opacity-30 transition-all duration-300 backdrop-blur-sm">
+                    <i class="fas fa-sync-alt mr-2"></i>
+                    Choose Recurring Tasks
+                </a>
+                {% if user.can_manage_tasks %}
+                <a href="{% url 'tasks:recurring-templates' %}" 
+                   class="inline-flex items-center px-4 py-2 bg-white bg-opacity-20 text-white rounded-lg font-medium hover:bg-opacity-30 transition-all duration-300 backdrop-blur-sm">
+                    <i class="fas fa-template mr-2"></i>
+                    Manage Templates
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Main Form -->
+        <div class="glass-card rounded-2xl shadow-2xl p-8 mb-8">
+            <!-- Recurring Tasks Info -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-info-circle text-blue-500"></i>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-blue-800">💡 Looking for Daily or Weekly Tasks?</h3>
+                        <div class="mt-2 text-sm text-blue-700">
+                            <p>Instead of creating individual tasks, you can choose from recurring tasks that automatically appear daily or weekly.</p>
+                            <div class="mt-2">
+                                <a href="{% url 'tasks:recurring-tasks' %}" 
+                                   class="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium">
+                                    <i class="fas fa-sync-alt mr-1"></i>
+                                    Browse Recurring Tasks
+                                    <i class="fas fa-arrow-right ml-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <form method="post" enctype="multipart/form-data" x-data="taskForm()" @submit="handleSubmit">
+                {% csrf_token %}
+                
+                <!-- Task Basic Info -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    <div class="space-y-6">
+                        <div>
+                            <label for="id_title" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-heading mr-2 text-primary-500"></i>Task Title
+                            </label>
+                            <input type="text" name="title" id="id_title" required
+                                   class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300"
+                                   placeholder="Enter task title..." x-model="formData.title">
+                        </div>
+
+                        <div>
+                            <label for="id_description" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-align-left mr-2 text-primary-500"></i>Description
+                            </label>
+                            <textarea name="description" id="id_description" rows="4"
+                                      class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300"
+                                      placeholder="Describe the task in detail..." x-model="formData.description"></textarea>
+                        </div>
+
+                        <div>
+                            <label for="id_assigned_to" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-user mr-2 text-primary-500"></i>Assign To
+                            </label>
+                            <select name="assigned_to" id="id_assigned_to"
+                                    class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300"
+                                    x-model="formData.assigned_to">
+                                <option value="">Select team member...</option>
+                                {% for user in users %}
+                                <option value="{{ user.id }}">{{ user.full_name }} ({{ user.get_role_display }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div>
+                            <label for="id_project" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-project-diagram mr-2 text-primary-500"></i>Project
+                            </label>
+                            <select name="project" id="id_project"
+                                    class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300"
+                                    x-model="formData.project">
+                                <option value="">Select project...</option>
+                                {% for project in projects %}
+                                <option value="{{ project.id }}">{{ project.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="id_due_date" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-calendar mr-2 text-primary-500"></i>Due Date
+                            </label>
+                            <input type="date" name="due_date" id="id_due_date"
+                                   class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300"
+                                   x-model="formData.due_date">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-3">
+                                <i class="fas fa-flag mr-2 text-primary-500"></i>Priority Level
+                            </label>
+                            <div class="grid grid-cols-3 gap-3">
+                                <label class="priority-badge cursor-pointer">
+                                    <input type="radio" name="priority" value="low" class="sr-only" x-model="formData.priority">
+                                    <div class="flex items-center justify-center p-3 border-2 rounded-lg transition-all duration-300"
+                                         :class="formData.priority === 'low' ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-200 hover:border-green-300'">
+                                        <i class="fas fa-chevron-down mr-2"></i>
+                                        <span class="font-medium">Low</span>
+                                    </div>
+                                </label>
+                                <label class="priority-badge cursor-pointer">
+                                    <input type="radio" name="priority" value="medium" class="sr-only" x-model="formData.priority">
+                                    <div class="flex items-center justify-center p-3 border-2 rounded-lg transition-all duration-300"
+                                         :class="formData.priority === 'medium' ? 'border-yellow-500 bg-yellow-50 text-yellow-700' : 'border-gray-200 hover:border-yellow-300'">
+                                        <i class="fas fa-minus mr-2"></i>
+                                        <span class="font-medium">Medium</span>
+                                    </div>
+                                </label>
+                                <label class="priority-badge cursor-pointer">
+                                    <input type="radio" name="priority" value="high" class="sr-only" x-model="formData.priority">
+                                    <div class="flex items-center justify-center p-3 border-2 rounded-lg transition-all duration-300"
+                                         :class="formData.priority === 'high' ? 'border-red-500 bg-red-50 text-red-700' : 'border-gray-200 hover:border-red-300'">
+                                        <i class="fas fa-chevron-up mr-2"></i>
+                                        <span class="font-medium">High</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- File Attachments -->
+                <div class="mb-8">
+                    <label class="block text-sm font-semibold text-gray-700 mb-3">
+                        <i class="fas fa-paperclip mr-2 text-primary-500"></i>Attachments
+                    </label>
+                    <div class="file-drop-zone rounded-lg p-6 text-center"
+                         @dragover.prevent="$el.classList.add('dragover')"
+                         @dragleave.prevent="$el.classList.remove('dragover')"
+                         @drop.prevent="handleFileDrop($event)">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                        <p class="text-lg font-medium text-gray-600 mb-2">Drop files here or click to browse</p>
+                        <p class="text-sm text-gray-500">Supports: PDF, DOC, XLS, PPT, Images (Max 10MB each)</p>
+                        <input type="file" name="attachments" multiple class="hidden" @change="handleFileSelect">
+                        <button type="button" class="mt-4 px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors duration-300"
+                                @click="$el.previousElementSibling.click()">
+                            Choose Files
+                        </button>
+                    </div>
+                    
+                    <!-- File List -->
+                    <div x-show="selectedFiles.length > 0" class="mt-4 space-y-2">
+                        <h4 class="font-medium text-gray-700">Selected Files:</h4>
+                        <template x-for="(file, index) in selectedFiles" :key="index">
+                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                <div class="flex items-center">
+                                    <i class="fas fa-file text-gray-400 mr-3"></i>
+                                    <span class="text-sm font-medium" x-text="file.name"></span>
+                                    <span class="ml-2 text-xs text-gray-500" x-text="formatFileSize(file.size)"></span>
+                                </div>
+                                <button type="button" @click="removeFile(index)" class="text-red-500 hover:text-red-700">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Additional Options -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="flex items-center">
+                        <input type="checkbox" name="is_recurring" id="id_is_recurring" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500" x-model="formData.is_recurring">
+                        <label for="id_is_recurring" class="ml-2 text-sm font-medium text-gray-700">
+                            <i class="fas fa-redo mr-1 text-primary-500"></i>Recurring Task
+                        </label>
+                    </div>
+                    
+                    <div class="flex items-center">
+                        <input type="checkbox" name="send_notifications" id="id_send_notifications" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500" x-model="formData.send_notifications" checked>
+                        <label for="id_send_notifications" class="ml-2 text-sm font-medium text-gray-700">
+                            <i class="fas fa-bell mr-1 text-primary-500"></i>Send Notifications
+                        </label>
+                    </div>
+                    
+                    <div class="flex items-center">
+                        <input type="checkbox" name="auto_assign" id="id_auto_assign" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500" x-model="formData.auto_assign">
+                        <label for="id_auto_assign" class="ml-2 text-sm font-medium text-gray-700">
+                            <i class="fas fa-magic mr-1 text-primary-500"></i>Auto-assign similar tasks
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex items-center justify-between pt-6 border-t border-gray-200">
+                    <div class="flex items-center space-x-4">
+                        <a href="{% url 'tasks:task-list' %}" class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors duration-300">
+                            <i class="fas fa-arrow-left mr-2"></i>Cancel
+                        </a>
+                        <a href="{% url 'tasks:recurring-tasks' %}" class="px-6 py-3 border border-blue-300 text-blue-700 rounded-lg font-medium hover:bg-blue-50 transition-colors duration-300">
+                            <i class="fas fa-sync-alt mr-2"></i>Recurring Tasks Instead
+                        </a>
+                    </div>
+                    
+                    <div class="flex space-x-4">
+                        <button type="button" @click="saveDraft" class="px-6 py-3 border border-primary-300 text-primary-700 rounded-lg font-medium hover:bg-primary-50 transition-colors duration-300">
+                            <i class="fas fa-save mr-2"></i>Save Draft
+                        </button>
+                        <button type="submit" class="px-8 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg font-medium hover:from-primary-700 hover:to-primary-800 transform hover:scale-105 transition-all duration-300 shadow-lg">
+                            <i class="fas fa-plus mr-2"></i>Create Task
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Quick Actions Panel -->
+        <div class="glass-card rounded-xl p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                <i class="fas fa-bolt mr-2 text-yellow-500"></i>Quick Actions
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <a href="{% url 'tasks:bulk-upload' %}" class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-300">
+                    <i class="fas fa-upload text-blue-500 mr-3"></i>
+                    <div>
+                        <div class="font-medium text-gray-800">Bulk Upload</div>
+                        <div class="text-sm text-gray-500">Upload multiple tasks via Excel</div>
+                    </div>
+                </a>
+                
+                <a href="{% url 'tasks:task-calendar' %}" class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-300">
+                    <i class="fas fa-calendar text-green-500 mr-3"></i>
+                    <div>
+                        <div class="font-medium text-gray-800">Calendar View</div>
+                        <div class="text-sm text-gray-500">View tasks in calendar</div>
+                    </div>
+                </a>
+                
+                <a href="{% url 'projects:project-list' %}" class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-300">
+                    <i class="fas fa-project-diagram text-purple-500 mr-3"></i>
+                    <div>
+                        <div class="font-medium text-gray-800">Project Tasks</div>
+                        <div class="text-sm text-gray-500">Create from project template</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function taskForm() {
+    return {
+        formData: {
+            title: '',
+            description: '',
+            assigned_to: '',
+            project: '',
+            due_date: '',
+            priority: 'medium',
+            is_recurring: false,
+            send_notifications: true,
+            auto_assign: false
+        },
+        selectedFiles: [],
+        
+        handleSubmit(e) {
+            // Add any form validation here
+            if (!this.formData.title.trim()) {
+                e.preventDefault();
+                alert('Please enter a task title');
+                return;
+            }
+        },
+        
+        handleFileDrop(e) {
+            e.target.classList.remove('dragover');
+            const files = Array.from(e.dataTransfer.files);
+            this.processFiles(files);
+        },
+        
+        handleFileSelect(e) {
+            const files = Array.from(e.target.files);
+            this.processFiles(files);
+        },
+        
+        processFiles(files) {
+            files.forEach(file => {
+                if (file.size <= 10 * 1024 * 1024) { // 10MB limit
+                    this.selectedFiles.push(file);
+                } else {
+                    alert(`File ${file.name} is too large. Maximum size is 10MB.`);
+                }
+            });
+        },
+        
+        removeFile(index) {
+            this.selectedFiles.splice(index, 1);
+        },
+        
+        formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        },
+        
+        saveDraft() {
+            // Implementation for saving draft
+            alert('Draft save functionality coming soon!');
+        }
+    }
+}
+
+// Auto-save functionality
+let autoSaveInterval = setInterval(() => {
+    const formData = new FormData(document.querySelector('form'));
+    // Store in localStorage for recovery
+    localStorage.setItem('taskDraft', JSON.stringify({
+        title: formData.get('title'),
+        description: formData.get('description'),
+        timestamp: new Date().toISOString()
+    }));
+}, 30000); // Auto-save every 30 seconds
+
+// Load draft on page load
+document.addEventListener('DOMContentLoaded', () => {
+    const draft = localStorage.getItem('taskDraft');
+    if (draft) {
+        const data = JSON.parse(draft);
+        if (confirm('Found a saved draft. Would you like to restore it?')) {
+            document.getElementById('id_title').value = data.title || '';
+            document.getElementById('id_description').value = data.description || '';
+        }
+    }
+});
+</script>
+{% endblock %}

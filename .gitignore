@@ -1,0 +1,56 @@
+# Django
+*.log
+*.pot
+*.pyc
+__pycache__/
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Google OAuth credentials and service accounts
+client_secret*.json
+*service-account*.json
+visioninnovateforge-*.json
+
+# Static files
+staticfiles/
+/static/
+
+# Node modules
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python virtual environment
+.venv/
+venv/
+env/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Excel files with potentially sensitive data
+*.xlsx
+*.xls
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+*.tmp
+*.temp

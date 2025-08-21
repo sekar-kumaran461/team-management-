@@ -1,0 +1,371 @@
+{% extends 'base.html' %}
+
+{% block title %}Create New Project - TeamLearn{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-8">
+    <!-- Page Header -->
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-lg p-8 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold mb-2">Create New Project</h1>
+                <p class="text-blue-100">Start an innovative project with your team</p>
+            </div>
+            <div class="hidden md:block">
+                <i class="fas fa-rocket text-6xl text-white opacity-20"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Project Creation Form -->
+    <div class="bg-white rounded-xl shadow-lg">
+        <div class="px-8 py-6 border-b border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-900">Project Details</h2>
+            <p class="text-gray-600 mt-1">Fill in the information below to create a new project</p>
+        </div>
+
+        <form method="post" class="px-8 py-6 space-y-6">
+            {% csrf_token %}
+            
+            <!-- Title -->
+            <div>
+                <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="fas fa-heading mr-2 text-blue-500"></i>Project Title *
+                </label>
+                <input type="text" 
+                       name="{{ form.title.name }}" 
+                       id="{{ form.title.id_for_label }}"
+                       value="{{ form.title.value|default:'' }}"
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                       placeholder="Enter a compelling project title"
+                       required>
+                {% if form.title.errors %}
+                    <div class="mt-1 text-sm text-red-600">{{ form.title.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Description -->
+            <div>
+                <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="fas fa-align-left mr-2 text-blue-500"></i>Project Description *
+                </label>
+                <textarea name="{{ form.description.name }}" 
+                          id="{{ form.description.id_for_label }}"
+                          rows="6"
+                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-vertical"
+                          placeholder="Describe your project vision, goals, and what you want to achieve..."
+                          required>{{ form.description.value|default:'' }}</textarea>
+                {% if form.description.errors %}
+                    <div class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Two Column Layout -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Category -->
+                <div>
+                    <label for="{{ form.category.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-folder mr-2 text-blue-500"></i>Category
+                    </label>
+                    <select name="{{ form.category.name }}" 
+                            id="{{ form.category.id_for_label }}"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                        <option value="">Select a category</option>
+                        {% for category in form.category.field.queryset %}
+                        <option value="{{ category.pk }}" {% if form.category.value == category.pk %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% if form.category.errors %}
+                        <div class="mt-1 text-sm text-red-600">{{ form.category.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Project Type -->
+                <div>
+                    <label for="{{ form.project_type.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-cog mr-2 text-blue-500"></i>Project Type
+                    </label>
+                    <select name="{{ form.project_type.name }}" 
+                            id="{{ form.project_type.id_for_label }}"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                        <option value="">Select project type</option>
+                        <option value="web_application" {% if form.project_type.value == 'web_application' %}selected{% endif %}>🌐 Web Application</option>
+                        <option value="mobile_app" {% if form.project_type.value == 'mobile_app' %}selected{% endif %}>📱 Mobile App</option>
+                        <option value="desktop_software" {% if form.project_type.value == 'desktop_software' %}selected{% endif %}>💻 Desktop Software</option>
+                        <option value="api_service" {% if form.project_type.value == 'api_service' %}selected{% endif %}>🔌 API Service</option>
+                        <option value="data_analysis" {% if form.project_type.value == 'data_analysis' %}selected{% endif %}>📊 Data Analysis</option>
+                        <option value="research" {% if form.project_type.value == 'research' %}selected{% endif %}>🔬 Research</option>
+                        <option value="design" {% if form.project_type.value == 'design' %}selected{% endif %}>🎨 Design</option>
+                        <option value="marketing" {% if form.project_type.value == 'marketing' %}selected{% endif %}>📈 Marketing Campaign</option>
+                        <option value="other" {% if form.project_type.value == 'other' %}selected{% endif %}>📦 Other</option>
+                    </select>
+                    {% if form.project_type.errors %}
+                        <div class="mt-1 text-sm text-red-600">{{ form.project_type.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Three Column Layout -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Priority -->
+                <div>
+                    <label for="{{ form.priority.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-star mr-2 text-yellow-500"></i>Priority
+                    </label>
+                    <select name="{{ form.priority.name }}" 
+                            id="{{ form.priority.id_for_label }}"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                        <option value="low" {% if form.priority.value == 'low' %}selected{% endif %}>🟢 Low</option>
+                        <option value="medium" {% if form.priority.value == 'medium' or not form.priority.value %}selected{% endif %}>🟡 Medium</option>
+                        <option value="high" {% if form.priority.value == 'high' %}selected{% endif %}>🟠 High</option>
+                        <option value="critical" {% if form.priority.value == 'critical' %}selected{% endif %}>🔴 Critical</option>
+                    </select>
+                    {% if form.priority.errors %}
+                        <div class="mt-1 text-sm text-red-600">{{ form.priority.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Complexity -->
+                <div>
+                    <label for="{{ form.complexity.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-layer-group mr-2 text-purple-500"></i>Complexity
+                    </label>
+                    <select name="{{ form.complexity.name }}" 
+                            id="{{ form.complexity.id_for_label }}"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                        <option value="simple" {% if form.complexity.value == 'simple' %}selected{% endif %}>⭐ Simple</option>
+                        <option value="moderate" {% if form.complexity.value == 'moderate' or not form.complexity.value %}selected{% endif %}>⭐⭐ Moderate</option>
+                        <option value="complex" {% if form.complexity.value == 'complex' %}selected{% endif %}>⭐⭐⭐ Complex</option>
+                        <option value="highly_complex" {% if form.complexity.value == 'highly_complex' %}selected{% endif %}>⭐⭐⭐⭐ Highly Complex</option>
+                    </select>
+                    {% if form.complexity.errors %}
+                        <div class="mt-1 text-sm text-red-600">{{ form.complexity.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Expected Duration -->
+                <div>
+                    <label for="{{ form.expected_duration_weeks.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-calendar-week mr-2 text-green-500"></i>Duration (Weeks)
+                    </label>
+                    <input type="number" 
+                           name="{{ form.expected_duration_weeks.name }}" 
+                           id="{{ form.expected_duration_weeks.id_for_label }}"
+                           value="{{ form.expected_duration_weeks.value|default:'' }}"
+                           min="1" 
+                           max="52" 
+                           step="1"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                           placeholder="8">
+                    {% if form.expected_duration_weeks.errors %}
+                        <div class="mt-1 text-sm text-red-600">{{ form.expected_duration_weeks.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Date Range -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Start Date -->
+                <div>
+                    <label for="{{ form.start_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-calendar-plus mr-2 text-green-500"></i>Start Date
+                    </label>
+                    <input type="date" 
+                           name="{{ form.start_date.name }}" 
+                           id="{{ form.start_date.id_for_label }}"
+                           value="{{ form.start_date.value|date:'Y-m-d'|default:'' }}"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                    {% if form.start_date.errors %}
+                        <div class="mt-1 text-sm text-red-600">{{ form.start_date.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- End Date -->
+                <div>
+                    <label for="{{ form.end_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-calendar-check mr-2 text-red-500"></i>Target End Date
+                    </label>
+                    <input type="date" 
+                           name="{{ form.end_date.name }}" 
+                           id="{{ form.end_date.id_for_label }}"
+                           value="{{ form.end_date.value|date:'Y-m-d'|default:'' }}"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                    {% if form.end_date.errors %}
+                        <div class="mt-1 text-sm text-red-600">{{ form.end_date.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Team Assignment -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Project Manager -->
+                <div>
+                    <label for="{{ form.project_manager.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-user-tie mr-2 text-purple-500"></i>Project Manager
+                    </label>
+                    <select name="{{ form.project_manager.name }}" 
+                            id="{{ form.project_manager.id_for_label }}"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                        <option value="">Select project manager</option>
+                        {% for user in form.project_manager.field.queryset %}
+                        <option value="{{ user.pk }}" {% if form.project_manager.value == user.pk %}selected{% endif %}>
+                            {{ user.full_name }} ({{ user.email }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% if form.project_manager.errors %}
+                        <div class="mt-1 text-sm text-red-600">{{ form.project_manager.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Team Size -->
+                <div>
+                    <label for="{{ form.max_team_size.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-users mr-2 text-blue-500"></i>Max Team Size
+                    </label>
+                    <input type="number" 
+                           name="{{ form.max_team_size.name }}" 
+                           id="{{ form.max_team_size.id_for_label }}"
+                           value="{{ form.max_team_size.value|default:5 }}"
+                           min="1" 
+                           max="20" 
+                           step="1"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                           placeholder="5">
+                    {% if form.max_team_size.errors %}
+                        <div class="mt-1 text-sm text-red-600">{{ form.max_team_size.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Project Goals -->
+            <div>
+                <label for="goals" class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="fas fa-bullseye mr-2 text-orange-500"></i>Project Goals
+                </label>
+                <textarea name="goals" 
+                          id="goals"
+                          rows="4"
+                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-vertical"
+                          placeholder="List the key goals and objectives for this project..."></textarea>
+            </div>
+
+            <!-- Budget (if applicable) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="{{ form.budget.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-dollar-sign mr-2 text-green-500"></i>Budget (Optional)
+                    </label>
+                    <input type="number" 
+                           name="{{ form.budget.name }}" 
+                           id="{{ form.budget.id_for_label }}"
+                           value="{{ form.budget.value|default:'' }}"
+                           min="0" 
+                           step="100"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                           placeholder="5000">
+                    {% if form.budget.errors %}
+                        <div class="mt-1 text-sm text-red-600">{{ form.budget.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Is Public -->
+                <div class="flex items-center justify-center">
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg w-full">
+                        <div class="flex items-center">
+                            <i class="fas fa-globe mr-3 text-blue-500"></i>
+                            <div>
+                                <h3 class="text-sm font-medium text-gray-900">Public Project</h3>
+                                <p class="text-sm text-gray-500">Make this project visible to all team members</p>
+                            </div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" 
+                                   name="{{ form.is_public.name }}" 
+                                   id="{{ form.is_public.id_for_label }}"
+                                   {% if form.is_public.value %}checked{% endif %}
+                                   class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center justify-between pt-6 border-t border-gray-200">
+                <a href="{% url 'projects:project-list' %}" 
+                   class="inline-flex items-center px-6 py-3 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Cancel
+                </a>
+                
+                <div class="flex space-x-3">
+                    <button type="button" 
+                            onclick="document.getElementById('preview-modal').classList.remove('hidden')"
+                            class="inline-flex items-center px-6 py-3 border border-blue-300 text-sm font-medium rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors duration-200">
+                        <i class="fas fa-eye mr-2"></i>
+                        Preview
+                    </button>
+                    
+                    <button type="submit" 
+                            class="inline-flex items-center px-8 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 transition-all duration-200 shadow-lg hover:shadow-xl">
+                        <i class="fas fa-rocket mr-2"></i>
+                        Create Project
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<div id="preview-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-lg bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Project Preview</h3>
+                <button onclick="document.getElementById('preview-modal').classList.add('hidden')" 
+                        class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div id="preview-content" class="space-y-4">
+                <!-- Preview content will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function updatePreview() {
+    const title = document.querySelector('[name="title"]').value || 'Untitled Project';
+    const description = document.querySelector('[name="description"]').value || 'No description provided';
+    const projectType = document.querySelector('[name="project_type"]').selectedOptions[0]?.text || 'No type selected';
+    const priority = document.querySelector('[name="priority"]').selectedOptions[0]?.text || 'Medium';
+    const complexity = document.querySelector('[name="complexity"]').selectedOptions[0]?.text || 'Moderate';
+    
+    document.getElementById('preview-content').innerHTML = `
+        <div class="bg-gray-50 p-4 rounded-lg">
+            <h4 class="text-xl font-semibold text-gray-900 mb-2">${title}</h4>
+            <p class="text-gray-600 mb-4">${description}</p>
+            <div class="flex flex-wrap gap-2">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    ${projectType}
+                </span>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                    ${priority}
+                </span>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                    ${complexity}
+                </span>
+            </div>
+        </div>
+    `;
+}
+
+// Update preview when opening modal
+document.querySelector('[onclick*="preview-modal"]').addEventListener('click', updatePreview);
+</script>
+{% endblock %}

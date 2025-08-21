@@ -1,0 +1,213 @@
+<!-- Task Submission Form -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center space-x-3">
+            <div class="flex-shrink-0">
+                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-upload text-blue-600"></i>
+                </div>
+            </div>
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900">Submit Your Work</h3>
+                <p class="text-sm text-gray-600">Upload files and provide submission details</p>
+            </div>
+        </div>
+        {% if user_submission %}
+        <div class="flex items-center space-x-2 text-sm">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                <i class="fas fa-check-circle mr-1"></i>
+                Previously Submitted
+            </span>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Previous Submission Alert -->
+    {% if user_submission %}
+    <div class="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+        <div class="flex items-start">
+            <div class="flex-shrink-0">
+                <i class="fas fa-info-circle text-amber-600 mt-0.5"></i>
+            </div>
+            <div class="ml-3">
+                <h4 class="text-sm font-medium text-amber-800">Previous Submission Found</h4>
+                <p class="text-sm text-amber-700 mt-1">
+                    You submitted this task on {{ user_submission.submitted_at|date:"M d, Y \a\t g:i A" }}.
+                    You can update your submission below.
+                </p>
+                {% if user_submission.review_notes %}
+                <div class="mt-3 p-3 bg-white rounded border border-amber-200">
+                    <p class="text-sm font-medium text-gray-900">Review Notes:</p>
+                    <p class="text-sm text-gray-700 mt-1">{{ user_submission.review_notes }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Submission Form -->
+    <form method="post" enctype="multipart/form-data" action="{% url 'tasks:submit-task' task.id %}" class="space-y-6">
+        {% csrf_token %}
+        
+        <!-- Submission Notes -->
+        <div>
+            <label for="submission_notes" class="block text-sm font-medium text-gray-700 mb-2">
+                <i class="fas fa-comment text-gray-400 mr-1"></i>
+                Submission Notes
+            </label>
+            <textarea 
+                name="notes" 
+                id="submission_notes" 
+                rows="4"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                placeholder="Describe your work, approach, challenges faced, or any notes for the reviewer..."
+                required
+            >{% if user_submission %}{{ user_submission.notes }}{% endif %}</textarea>
+            <p class="mt-1 text-xs text-gray-500">Provide details about your submission for the reviewer</p>
+        </div>
+
+        <!-- File Upload -->
+        <div>
+            <label for="submission_files" class="block text-sm font-medium text-gray-700 mb-2">
+                <i class="fas fa-paperclip text-gray-400 mr-1"></i>
+                Upload File
+            </label>
+            <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+                <div class="space-y-2">
+                    <i class="fas fa-cloud-upload-alt text-3xl text-gray-400"></i>
+                    <div>
+                        <label for="submission_file" class="cursor-pointer">
+                            <span class="text-sm font-medium text-blue-600 hover:text-blue-500">Upload a file</span>
+                            <input 
+                                type="file" 
+                                name="file" 
+                                id="submission_file" 
+                                class="hidden"
+                                accept=".pdf,.doc,.docx,.txt,.zip,.rar,.jpg,.jpeg,.png,.gif,.mp4,.mov,.avi"
+                            >
+                        </label>
+                        <span class="text-sm text-gray-500">or drag and drop</span>
+                    </div>
+                    <p class="text-xs text-gray-500">
+                        Supported: PDF, DOC, DOCX, TXT, ZIP, RAR, Images, Videos (Max 10MB)
+                    </p>
+                </div>
+            </div>
+            
+            <!-- File Preview Area -->
+            <div id="file-preview" class="mt-3 space-y-2 hidden">
+                <p class="text-sm font-medium text-gray-700">Selected File:</p>
+                <div id="file-info" class="py-2 px-3 bg-white rounded border border-gray-200"></div>
+            </div>
+        </div>
+
+        <!-- External URL Option -->
+        <div>
+            <label for="external_url" class="block text-sm font-medium text-gray-700 mb-2">
+                <i class="fas fa-link text-gray-400 mr-1"></i>
+                External URL (Optional)
+            </label>
+            <input 
+                type="url" 
+                name="external_url" 
+                id="external_url" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="https://github.com/username/repo or https://drive.google.com/..."
+                value="{% if user_submission %}{{ user_submission.external_url }}{% endif %}"
+            >
+            <p class="mt-1 text-xs text-gray-500">Link to GitHub repository, Google Drive, or other external resource</p>
+        </div>
+
+        <!-- Submission Type -->
+        <div>
+            <label for="submission_type" class="block text-sm font-medium text-gray-700 mb-2">
+                <i class="fas fa-layer-group text-gray-400 mr-1"></i>
+                Submission Type
+            </label>
+            <select 
+                name="submission_type" 
+                id="submission_type"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+                <option value="code" {% if user_submission.submission_type == 'code' %}selected{% endif %}>Code/Repository</option>
+                <option value="document" {% if user_submission.submission_type == 'document' %}selected{% endif %}>Document</option>
+                <option value="design" {% if user_submission.submission_type == 'design' %}selected{% endif %}>Design Files</option>
+                <option value="video" {% if user_submission.submission_type == 'video' %}selected{% endif %}>Video Demo</option>
+                <option value="link" {% if user_submission.submission_type == 'link' %}selected{% endif %}>External Link</option>
+                <option value="other" {% if user_submission.submission_type == 'other' %}selected{% endif %}>Other</option>
+            </select>
+            <p class="mt-1 text-xs text-gray-500">What type of submission is this?</p>
+        </div>
+
+        <!-- Submission Actions -->
+        <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+            <div class="flex items-center space-x-4">
+                <span class="text-sm text-gray-600">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Your submission will be reviewed by the task reviewer
+                </span>
+            </div>
+            
+            <div class="flex items-center space-x-3">
+                <button 
+                    type="button" 
+                    onclick="closeSubmissionForm()"
+                    class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
+                >
+                    Cancel
+                </button>
+                <button 
+                    type="submit"
+                    class="px-6 py-2 bg-blue-600 border border-transparent rounded-lg text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors flex items-center"
+                    id="submit-btn"
+                >
+                    <i class="fas fa-paper-plane mr-2"></i>
+                    {% if user_submission %}Update Submission{% else %}Submit Task{% endif %}
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- JavaScript for file handling -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('submission_file');
+    const filePreview = document.getElementById('file-preview');
+    const fileInfo = document.getElementById('file-info');
+    const submitBtn = document.getElementById('submit-btn');
+
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        
+        if (file) {
+            filePreview.classList.remove('hidden');
+            
+            fileInfo.innerHTML = `
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-file text-blue-500"></i>
+                    <span class="text-sm text-gray-900">${file.name}</span>
+                    <span class="text-xs text-gray-500">(${(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                </div>
+            `;
+        } else {
+            filePreview.classList.add('hidden');
+        }
+    });
+
+    // Form submission handling
+    const form = fileInput.closest('form');
+    form.addEventListener('submit', function(e) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Submitting...';
+    });
+});
+
+function closeSubmissionForm() {
+    const formContainer = document.querySelector('.submission-form-container');
+    if (formContainer) {
+        formContainer.style.display = 'none';
+    }
+}
+</script>

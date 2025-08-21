@@ -1,0 +1,272 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Recurring Task Template - TeamLearn{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+            <div class="flex items-start justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900 mb-2 flex items-center">
+                        <i class="fas fa-plus-circle text-blue-600 mr-3"></i>
+                        Create Recurring Task Template
+                    </h1>
+                    <p class="text-gray-600">Create a template for tasks that will repeat daily or weekly</p>
+                </div>
+                
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'tasks:recurring-templates' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Back to Templates
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                
+                <!-- Basic Information -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2">
+                        Basic Information
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="title" class="block text-sm font-medium text-gray-700 mb-1">
+                                Task Title *
+                            </label>
+                            <input type="text" name="title" id="title" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="e.g., Daily Standup, Weekly Review">
+                        </div>
+                        
+                        <div>
+                            <label for="category" class="block text-sm font-medium text-gray-700 mb-1">
+                                Category
+                            </label>
+                            <select name="category" id="category"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">Select a category</option>
+                                {% for category in categories %}
+                                <option value="{{ category.id }}">{{ category.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="description" class="block text-sm font-medium text-gray-700 mb-1">
+                            Description *
+                        </label>
+                        <textarea name="description" id="description" rows="3" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="Describe what this recurring task involves..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Task Properties -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2">
+                        Task Properties
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div>
+                            <label for="task_type" class="block text-sm font-medium text-gray-700 mb-1">
+                                Task Type
+                            </label>
+                            <select name="task_type" id="task_type"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                {% for value, label in task_types %}
+                                <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="priority" class="block text-sm font-medium text-gray-700 mb-1">
+                                Priority
+                            </label>
+                            <select name="priority" id="priority"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                {% for value, label in priority_choices %}
+                                <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="difficulty" class="block text-sm font-medium text-gray-700 mb-1">
+                                Difficulty
+                            </label>
+                            <select name="difficulty" id="difficulty"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                {% for value, label in difficulty_choices %}
+                                <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="estimated_hours" class="block text-sm font-medium text-gray-700 mb-1">
+                                Estimated Hours
+                            </label>
+                            <input type="number" name="estimated_hours" id="estimated_hours" step="0.5" min="0.5" value="1.0"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="points_value" class="block text-sm font-medium text-gray-700 mb-1">
+                            Points Value
+                        </label>
+                        <input type="number" name="points_value" id="points_value" min="1" value="10"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                </div>
+
+                <!-- Recurrence Settings -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2">
+                        Recurrence Settings
+                    </h3>
+                    
+                    <div>
+                        <label for="recurrence_type" class="block text-sm font-medium text-gray-700 mb-1">
+                            Recurrence Type *
+                        </label>
+                        <select name="recurrence_type" id="recurrence_type" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">Select recurrence type</option>
+                            {% for value, label in recurrence_choices %}
+                            <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div id="weekly_days" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Days of the Week (for weekly tasks)
+                        </label>
+                        <div class="grid grid-cols-7 gap-2">
+                            {% for day_code, day_name in weekdays %}
+                            <label class="flex items-center justify-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                                <input type="checkbox" name="recurrence_days[]" value="{{ day_code }}" class="sr-only peer">
+                                <span class="peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 w-full text-center py-1 rounded border border-transparent">
+                                    {{ day_name }}
+                                </span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assignment Settings -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2">
+                        Assignment Settings
+                    </h3>
+                    
+                    <div class="space-y-3">
+                        <div class="flex items-center">
+                            <input type="checkbox" name="allow_member_selection" id="allow_member_selection" value="1"
+                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <label for="allow_member_selection" class="ml-2 block text-sm text-gray-900">
+                                Allow team members to choose this task
+                            </label>
+                        </div>
+                        
+                        <div class="flex items-center">
+                            <input type="checkbox" name="assigned_to_all" id="assigned_to_all" value="1"
+                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <label for="assigned_to_all" class="ml-2 block text-sm text-gray-900">
+                                Automatically assign to all team members
+                            </label>
+                        </div>
+                        
+                        <div id="max_assignees_field" class="hidden">
+                            <label for="max_assignees" class="block text-sm font-medium text-gray-700 mb-1">
+                                Maximum number of assignees per instance
+                            </label>
+                            <input type="number" name="max_assignees" id="max_assignees" min="1" value="1"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Acceptance Criteria -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2">
+                        Completion Criteria
+                    </h3>
+                    
+                    <div>
+                        <label for="acceptance_criteria" class="block text-sm font-medium text-gray-700 mb-1">
+                            Acceptance Criteria
+                        </label>
+                        <textarea name="acceptance_criteria" id="acceptance_criteria" rows="3"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="What needs to be done to consider this task complete?"></textarea>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
+                    <a href="{% url 'tasks:recurring-templates' %}" 
+                        class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
+                        Cancel
+                    </a>
+                    <button type="submit" 
+                        class="px-6 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <i class="fas fa-save mr-2"></i>
+                        Create Template
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Custom checkbox styling */
+input[type="checkbox"]:checked + span {
+    background-color: #3b82f6 !important;
+    color: white !important;
+    border-color: #3b82f6 !important;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const recurrenceType = document.getElementById('recurrence_type');
+    const weeklyDays = document.getElementById('weekly_days');
+    const allowMemberSelection = document.getElementById('allow_member_selection');
+    const maxAssigneesField = document.getElementById('max_assignees_field');
+    
+    // Show/hide weekly days based on recurrence type
+    recurrenceType.addEventListener('change', function() {
+        if (this.value === 'weekly' || this.value === 'both') {
+            weeklyDays.classList.remove('hidden');
+        } else {
+            weeklyDays.classList.add('hidden');
+        }
+    });
+    
+    // Show/hide max assignees based on member selection
+    allowMemberSelection.addEventListener('change', function() {
+        if (this.checked) {
+            maxAssigneesField.classList.remove('hidden');
+        } else {
+            maxAssigneesField.classList.add('hidden');
+        }
+    });
+});
+</script>
+{% endblock %}

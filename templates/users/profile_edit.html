@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Profile - Team Management{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h1 class="text-2xl font-bold text-gray-900">Edit Profile</h1>
+            <p class="text-gray-600">Update your personal information and preferences.</p>
+        </div>
+        
+        <form method="post" enctype="multipart/form-data" class="px-6 py-4">
+            {% csrf_token %}
+            
+            {% if form.errors %}
+                <div class="rounded-md bg-red-50 p-4 mb-6">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-exclamation-circle text-red-400"></i>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-red-800">
+                                Please correct the following errors:
+                            </h3>
+                            <div class="mt-2 text-sm text-red-700">
+                                <ul class="list-disc pl-5 space-y-1">
+                                    {% for field, errors in form.errors.items %}
+                                        {% for error in errors %}
+                                            <li>{{ error }}</li>
+                                        {% endfor %}
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <div class="space-y-6">
+                <!-- Profile Picture -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Profile Picture</label>
+                    <div class="flex items-center space-x-6">
+                        <div class="flex-shrink-0">
+                            {% if user.profile_picture %}
+                                <img class="h-16 w-16 rounded-full object-cover" src="{{ user.profile_picture.url }}" alt="{{ user.full_name }}">
+                            {% else %}
+                                <div class="h-16 w-16 rounded-full bg-blue-100 flex items-center justify-center">
+                                    <span class="text-lg font-medium text-blue-600">{{ user.first_name.0 }}{{ user.last_name.0 }}</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="flex-1">
+                            {{ form.profile_picture }}
+                            <p class="text-xs text-gray-500 mt-1">JPG, PNG, or GIF. Max file size 5MB.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Basic Information -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="{{ form.first_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+                        {{ form.first_name }}
+                    </div>
+                    <div>
+                        <label for="{{ form.last_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+                        {{ form.last_name }}
+                    </div>
+                </div>
+
+                <div>
+                    <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                    {{ form.email }}
+                </div>
+
+                <div>
+                    <label for="{{ form.phone.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                    {{ form.phone }}
+                </div>
+
+                <div>
+                    <label for="{{ form.bio.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Bio</label>
+                    {{ form.bio }}
+                    <p class="text-xs text-gray-500 mt-1">Tell us a bit about yourself, your interests, and your goals.</p>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200 mt-8">
+                <a href="{% url 'users:profile' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Cancel
+                </a>
+                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <i class="fas fa-save mr-2"></i>
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Extended Profile Form -->
+    {% if user.profile %}
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mt-6">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-medium text-gray-900">Additional Information</h2>
+            <p class="text-gray-600">Optional information to help customize your learning experience.</p>
+        </div>
+        
+        <div class="px-6 py-4">
+            <form method="post" action="#" class="space-y-6">
+                {% csrf_token %}
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">GitHub Username</label>
+                        <input type="text" name="github_username" value="{{ user.profile.github_username|default:'' }}" 
+                               class="form-input w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                               placeholder="your-github-username">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">LinkedIn URL</label>
+                        <input type="url" name="linkedin_url" value="{{ user.profile.linkedin_url|default:'' }}" 
+                               class="form-input w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                               placeholder="https://linkedin.com/in/yourprofile">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Learning Goals</label>
+                    <textarea name="learning_goals" rows="4" 
+                              class="form-textarea w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                              placeholder="What do you want to achieve through this program?">{{ user.profile.learning_goals|default:'' }}</textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Preferred Learning Topics</label>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {% for topic in topic_choices %}
+                            <label class="flex items-center">
+                                <input type="checkbox" name="preferred_topics" value="{{ topic }}" 
+                                       {% if topic in user.profile.preferred_learning_topics %}checked{% endif %}
+                                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                <span class="ml-2 text-sm text-gray-700">{{ topic }}</span>
+                            </label>
+                        {% empty %}
+                            <div class="col-span-full">
+                                <input type="text" name="preferred_topics_custom" 
+                                       class="form-input w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                       placeholder="Enter topics separated by commas">
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="flex justify-end">
+                    <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                        <i class="fas fa-save mr-2"></i>
+                        Update Additional Info
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

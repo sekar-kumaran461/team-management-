@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: team-management
+    env: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn team_management.wsgi:application"
+    plan: free
+    envVars:
+      - key: DEBUG
+        value: False
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALLOWED_HOSTS
+        value: "*"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: team-management-db
+          property: connectionString
+      - key: PYTHON_VERSION
+        value: "3.11.0"
+
+  - type: postgres
+    name: team-management-db
+    databaseName: team_management
+    user: team_management_user
+    plan: free

@@ -1,0 +1,83 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_modify %}
+
+{% block title %}Bulk Import Resources{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Home</a>
+    &rsaquo; <a href="{% url 'admin:resources_resource_changelist' %}">Resources</a>
+    &rsaquo; Bulk Import
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="module aligned">
+    <h1>Bulk Import Resources</h1>
+    
+    <div class="help">
+        <p>You can upload resources in bulk using CSV or Excel files. The file should contain the following columns:</p>
+        <ul>
+            <li><strong>title</strong> - Resource title (required)</li>
+            <li><strong>description</strong> - Resource description</li>
+            <li><strong>resource_type</strong> - Type: document, video, link, image, code, note, presentation, dataset</li>
+            <li><strong>category</strong> - Category name (optional)</li>
+            <li><strong>content</strong> - Text content for note-type resources</li>
+            <li><strong>external_url</strong> - URL for external links</li>
+            <li><strong>tags</strong> - Comma-separated tags (e.g., "DSA,Python,Beginner")</li>
+            <li><strong>difficulty_level</strong> - Difficulty: beginner, intermediate, advanced</li>
+            <li><strong>uploaded_by_email</strong> - Email of the user uploading (optional, defaults to current user)</li>
+        </ul>
+        
+        <p><a href="{% static 'sample_resources_import.csv' %}" download>Download sample CSV template</a></p>
+    </div>
+    
+    <form enctype="multipart/form-data" method="post">
+        {% csrf_token %}
+        
+        <fieldset class="module aligned">
+            <h2>Upload File</h2>
+            
+            <div class="form-row">
+                <div>
+                    <label for="csv_file">CSV File:</label>
+                    <input type="file" name="csv_file" id="csv_file" accept=".csv" />
+                    <p class="help">Upload a CSV file with resource data.</p>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div>
+                    <label for="excel_file">Excel File:</label>
+                    <input type="file" name="excel_file" id="excel_file" accept=".xlsx,.xls" />
+                    <p class="help">Upload an Excel file with resource data.</p>
+                </div>
+            </div>
+        </fieldset>
+        
+        <div class="submit-row">
+            <input type="submit" value="Import Resources" class="default" />
+            <a href="{% url 'admin:resources_resource_changelist' %}" class="button cancel-link">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const csvInput = document.getElementById('csv_file');
+    const excelInput = document.getElementById('excel_file');
+    
+    csvInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            excelInput.value = '';
+        }
+    });
+    
+    excelInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            csvInput.value = '';
+        }
+    });
+});
+</script>
+{% endblock %}

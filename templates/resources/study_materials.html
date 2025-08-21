@@ -1,0 +1,304 @@
+{% extends 'base.html' %}
+
+{% block title %}Study Materials - TeamLearn{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Page Header -->
+    <div class="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl shadow-lg p-8 text-white relative overflow-hidden">
+        <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white opacity-10 rounded-full"></div>
+        <div class="absolute bottom-0 left-0 -mb-8 -ml-8 w-32 h-32 bg-white opacity-5 rounded-full"></div>
+        <div class="relative flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold">Study Materials</h1>
+                <p class="text-purple-100 mt-2">Curated learning resources with structured content and progress tracking</p>
+            </div>
+            <div class="flex space-x-3">
+                <a href="{% url 'resources:resource-upload' %}" class="inline-flex items-center px-6 py-3 border border-white border-opacity-30 text-sm font-medium rounded-lg text-white bg-white bg-opacity-20 hover:bg-opacity-30 transition-all duration-200">
+                    <i class="fas fa-plus mr-2"></i>
+                    Add Study Material
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Study Material Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-purple-500 hover:shadow-lg transition-shadow duration-200">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-book text-purple-600 text-xl"></i>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Total Materials</h3>
+                    <div class="text-3xl font-bold text-gray-900">{{ study_materials.count|default:0 }}</div>
+                    <p class="text-sm text-gray-500">Available resources</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500 hover:shadow-lg transition-shadow duration-200">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-graduation-cap text-green-600 text-xl"></i>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Completed</h3>
+                    <div class="text-3xl font-bold text-gray-900">0</div>
+                    <p class="text-sm text-gray-500">Your progress</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500 hover:shadow-lg transition-shadow duration-200">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-clock text-blue-600 text-xl"></i>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-lg font-semibold text-gray-900">In Progress</h3>
+                    <div class="text-3xl font-bold text-gray-900">0</div>
+                    <p class="text-sm text-gray-500">Currently studying</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-yellow-500 hover:shadow-lg transition-shadow duration-200">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-percentage text-yellow-600 text-xl"></i>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Avg Progress</h3>
+                    <div class="text-3xl font-bold text-gray-900">0%</div>
+                    <p class="text-sm text-gray-500">Overall completion</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <form method="GET" class="flex flex-wrap gap-4 items-center">
+            <div class="flex-1 min-w-64">
+                <input type="text" name="search" value="{{ request.GET.search }}" placeholder="Search study materials..." 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+            </div>
+            <div>
+                <select name="difficulty" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                    <option value="">All Difficulties</option>
+                    <option value="beginner" {% if request.GET.difficulty == 'beginner' %}selected{% endif %}>⭐ Beginner</option>
+                    <option value="intermediate" {% if request.GET.difficulty == 'intermediate' %}selected{% endif %}>⭐⭐ Intermediate</option>
+                    <option value="advanced" {% if request.GET.difficulty == 'advanced' %}selected{% endif %}>⭐⭐⭐ Advanced</option>
+                    <option value="expert" {% if request.GET.difficulty == 'expert' %}selected{% endif %}>⭐⭐⭐⭐ Expert</option>
+                </select>
+            </div>
+            <div>
+                <select name="category" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                    <option value="">All Categories</option>
+                    <option value="programming" {% if request.GET.category == 'programming' %}selected{% endif %}>💻 Programming</option>
+                    <option value="design" {% if request.GET.category == 'design' %}selected{% endif %}>🎨 Design</option>
+                    <option value="business" {% if request.GET.category == 'business' %}selected{% endif %}>💼 Business</option>
+                    <option value="marketing" {% if request.GET.category == 'marketing' %}selected{% endif %}>📈 Marketing</option>
+                    <option value="data_science" {% if request.GET.category == 'data_science' %}selected{% endif %}>📊 Data Science</option>
+                </select>
+            </div>
+            <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700">
+                <i class="fas fa-search mr-2"></i>
+                Search
+            </button>
+        </form>
+    </div>
+
+    <!-- Study Materials Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for study_material in study_materials %}
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
+            <!-- Study Material Header -->
+            <div class="p-6">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex-1">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">{{ study_material.resource.title }}</h3>
+                        <p class="text-sm text-gray-600 mb-3 line-clamp-3">{{ study_material.resource.description|truncatechars:120 }}</p>
+                    </div>
+                    <div class="ml-3">
+                        <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-book text-purple-600"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Study Material Meta -->
+                <div class="flex items-center justify-between text-xs text-gray-500 mb-4">
+                    <div class="flex items-center space-x-3">
+                        <span class="flex items-center">
+                            <i class="fas fa-user mr-1"></i>
+                            {{ study_material.resource.uploaded_by.first_name }}
+                        </span>
+                        <span class="flex items-center">
+                            <i class="fas fa-calendar mr-1"></i>
+                            {{ study_material.created_at|date:"M d" }}
+                        </span>
+                        {% if study_material.estimated_completion_time %}
+                        <span class="flex items-center">
+                            <i class="fas fa-clock mr-1"></i>
+                            {{ study_material.estimated_completion_time }}h
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Difficulty and Category -->
+                <div class="flex flex-wrap gap-2 mb-4">
+                    {% if study_material.difficulty_level %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                {% if study_material.difficulty_level == 'beginner' %}bg-green-100 text-green-800
+                                {% elif study_material.difficulty_level == 'intermediate' %}bg-yellow-100 text-yellow-800
+                                {% elif study_material.difficulty_level == 'advanced' %}bg-orange-100 text-orange-800
+                                {% else %}bg-red-100 text-red-800{% endif %}">
+                        {% if study_material.difficulty_level == 'beginner' %}⭐ Beginner
+                        {% elif study_material.difficulty_level == 'intermediate' %}⭐⭐ Intermediate
+                        {% elif study_material.difficulty_level == 'advanced' %}⭐⭐⭐ Advanced
+                        {% else %}⭐⭐⭐⭐ Expert{% endif %}
+                    </span>
+                    {% endif %}
+                    
+                    {% if study_material.resource.category %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                        {{ study_material.resource.category.name }}
+                    </span>
+                    {% endif %}
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="mb-4">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-xs font-medium text-gray-700">Progress</span>
+                        <span class="text-xs text-gray-500">0%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-purple-600 h-2 rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+                
+                <!-- Learning Objectives -->
+                {% if study_material.learning_objectives %}
+                <div class="mb-4">
+                    <h4 class="text-sm font-medium text-gray-900 mb-2">Learning Objectives:</h4>
+                    <ul class="text-xs text-gray-600 space-y-1">
+                        {% for objective in study_material.learning_objectives|slice:":3" %}
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-green-500 mr-2 mt-0.5 text-xs"></i>
+                            {{ objective }}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                
+                <!-- Action Buttons -->
+                <div class="flex space-x-3">
+                    <a href="{% url 'resources:resource-detail' study_material.resource.pk %}" 
+                       class="flex-1 inline-flex justify-center items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        <i class="fas fa-eye mr-2"></i>
+                        View
+                    </a>
+                    <button onclick="startStudying({{ study_material.pk }})" 
+                            class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700">
+                        <i class="fas fa-play mr-2"></i>
+                        Start
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+            <i class="fas fa-book-open text-4xl text-gray-300 mb-4"></i>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No study materials found</h3>
+            <p class="text-gray-600 mb-6">
+                {% if request.GET.search or request.GET.difficulty or request.GET.category %}
+                    Try adjusting your search filters.
+                {% else %}
+                    Start building your learning library by adding study materials!
+                {% endif %}
+            </p>
+            <a href="{% url 'resources:resource-upload' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700">
+                <i class="fas fa-plus mr-2"></i>
+                Add First Study Material
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <nav class="flex items-center justify-between">
+            <div class="flex-1 flex justify-between sm:hidden">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Previous
+                    </a>
+                {% endif %}
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Next
+                    </a>
+                {% endif %}
+            </div>
+            
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-gray-700">
+                        Showing <span class="font-medium">{{ page_obj.start_index }}</span> to <span class="font-medium">{{ page_obj.end_index }}</span> of <span class="font-medium">{{ page_obj.paginator.count }}</span> results
+                    </p>
+                </div>
+                <div>
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                        {% if page_obj.has_previous %}
+                            <a href="?page={{ page_obj.previous_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        {% endif %}
+                        
+                        {% for page_num in page_obj.paginator.page_range %}
+                            {% if page_num == page_obj.number %}
+                                <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-purple-50 text-sm font-medium text-purple-600">
+                                    {{ page_num }}
+                                </span>
+                            {% else %}
+                                <a href="?page={{ page_num }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                    {{ page_num }}
+                                </a>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        {% endif %}
+                    </nav>
+                </div>
+            </div>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function startStudying(materialId) {
+    // Add study tracking functionality here
+    console.log('Starting study material:', materialId);
+    // You can implement progress tracking, time logging, etc.
+}
+</script>
+{% endblock %}

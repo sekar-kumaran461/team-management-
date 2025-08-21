@@ -1,0 +1,295 @@
+{% extends 'base.html' %}
+
+{% block title %}Upload Resource - TeamLearn{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-8">
+    <!-- Page Header -->
+    <div class="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl shadow-lg p-8 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold mb-2">Upload Resource</h1>
+                <p class="text-emerald-100">Share valuable learning materials with your team</p>
+            </div>
+            <div class="hidden md:block">
+                <i class="fas fa-cloud-upload-alt text-6xl text-white opacity-20"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resource Upload Form -->
+    <div class="bg-white rounded-xl shadow-lg">
+        <div class="px-8 py-6 border-b border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-900">Resource Details</h2>
+            <p class="text-gray-600 mt-1">Fill in the information below to upload a new resource</p>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" class="px-8 py-6 space-y-6">
+            {% csrf_token %}
+            
+            <!-- Title -->
+            <div>
+                <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="fas fa-heading mr-2 text-emerald-500"></i>Resource Title *
+                </label>
+                <input type="text" 
+                       name="{{ form.title.name }}" 
+                       id="{{ form.title.id_for_label }}"
+                       value="{{ form.title.value|default:'' }}"
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                       placeholder="Enter a descriptive title for your resource"
+                       required>
+                {% if form.title.errors %}
+                    <div class="mt-1 text-sm text-red-600">{{ form.title.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Description -->
+            <div>
+                <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="fas fa-align-left mr-2 text-emerald-500"></i>Description *
+                </label>
+                <textarea name="{{ form.description.name }}" 
+                          id="{{ form.description.id_for_label }}"
+                          rows="4"
+                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors resize-vertical"
+                          placeholder="Describe what this resource is about, what it teaches, and how it can be useful..."
+                          required>{{ form.description.value|default:'' }}</textarea>
+                {% if form.description.errors %}
+                    <div class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Two Column Layout -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Category -->
+                <div>
+                    <label for="{{ form.category.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-folder mr-2 text-emerald-500"></i>Category
+                    </label>
+                    <select name="{{ form.category.name }}" 
+                            id="{{ form.category.id_for_label }}"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors">
+                        <option value="">Select a category</option>
+                        {% for category in form.category.field.queryset %}
+                        <option value="{{ category.pk }}" {% if form.category.value == category.pk %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% if form.category.errors %}
+                        <div class="mt-1 text-sm text-red-600">{{ form.category.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Resource Type -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-file-alt mr-2 text-emerald-500"></i>Resource Type
+                    </label>
+                    <select name="resource_type" 
+                            id="resource_type"
+                            onchange="toggleUploadMethod()"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors">
+                        <option value="link">🔗 External Link</option>
+                        <option value="file">📁 File Upload</option>
+                        <option value="google_drive">☁️ Google Drive</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- File Upload Section -->
+            <div id="upload-section">
+                <!-- Link Input (Default) -->
+                <div id="link-input" class="upload-method">
+                    <label for="{{ form.file_url.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-link mr-2 text-emerald-500"></i>Resource URL *
+                    </label>
+                    <input type="url" 
+                           name="{{ form.file_url.name }}" 
+                           id="{{ form.file_url.id_for_label }}"
+                           value="{{ form.file_url.value|default:'' }}"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                           placeholder="https://example.com/resource">
+                    <p class="mt-1 text-sm text-gray-500">Enter the URL to your online resource (website, video, document, etc.)</p>
+                    {% if form.file_url.errors %}
+                        <div class="mt-1 text-sm text-red-600">{{ form.file_url.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- File Upload -->
+                <div id="file-input" class="upload-method hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-cloud-upload-alt mr-2 text-emerald-500"></i>Upload File *
+                    </label>
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-emerald-400 transition-colors">
+                        <input type="file" 
+                               name="upload_file" 
+                               id="file-upload"
+                               class="hidden"
+                               accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.md,.zip,.rar"
+                               onchange="updateFileName()">
+                        <label for="file-upload" class="cursor-pointer">
+                            <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                            <p class="text-lg font-medium text-gray-700">Click to upload file</p>
+                            <p class="text-sm text-gray-500">or drag and drop</p>
+                            <p class="text-xs text-gray-400 mt-2">PDF, DOC, PPT, XLS, TXT, ZIP up to 50MB</p>
+                        </label>
+                        <div id="file-name" class="mt-2 text-sm text-emerald-600 font-medium hidden"></div>
+                    </div>
+                </div>
+
+                <!-- Google Drive -->
+                <div id="drive-input" class="upload-method hidden">
+                    <label for="{{ form.drive_file_id.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fab fa-google-drive mr-2 text-emerald-500"></i>Google Drive File ID *
+                    </label>
+                    <input type="text" 
+                           name="{{ form.drive_file_id.name }}" 
+                           id="{{ form.drive_file_id.id_for_label }}"
+                           value="{{ form.drive_file_id.value|default:'' }}"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                           placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms">
+                    <p class="mt-1 text-sm text-gray-500">Enter the Google Drive file ID from the sharing URL</p>
+                    {% if form.drive_file_id.errors %}
+                        <div class="mt-1 text-sm text-red-600">{{ form.drive_file_id.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Tags -->
+            <div>
+                <label for="{{ form.tags.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="fas fa-tags mr-2 text-emerald-500"></i>Tags
+                </label>
+                <input type="text" 
+                       name="{{ form.tags.name }}" 
+                       id="{{ form.tags.id_for_label }}"
+                       value="{{ form.tags.value|default:'' }}"
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                       placeholder="Enter tags separated by commas (e.g., python, tutorial, beginner)">
+                <p class="mt-1 text-sm text-gray-500">Use tags to help others find your resource easily</p>
+                {% if form.tags.errors %}
+                    <div class="mt-1 text-sm text-red-600">{{ form.tags.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Public/Private Toggle -->
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div class="flex items-center">
+                    <i class="fas fa-globe mr-3 text-emerald-500"></i>
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-900">Make Resource Public</h3>
+                        <p class="text-sm text-gray-500">Allow all team members to view and download this resource</p>
+                    </div>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" 
+                           name="{{ form.is_public.name }}" 
+                           id="{{ form.is_public.id_for_label }}"
+                           {% if form.is_public.value %}checked{% endif %}
+                           class="sr-only peer">
+                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                </label>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center justify-between pt-6 border-t border-gray-200">
+                <a href="{% url 'resources:resource-list' %}" 
+                   class="inline-flex items-center px-6 py-3 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Cancel
+                </a>
+                
+                <div class="flex space-x-3">
+                    <button type="button" 
+                            onclick="document.getElementById('preview-modal').classList.remove('hidden')"
+                            class="inline-flex items-center px-6 py-3 border border-emerald-300 text-sm font-medium rounded-lg text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors duration-200">
+                        <i class="fas fa-eye mr-2"></i>
+                        Preview
+                    </button>
+                    
+                    <button type="submit" 
+                            class="inline-flex items-center px-8 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-emerald-600 hover:bg-emerald-700 focus:ring-4 focus:ring-emerald-200 transition-all duration-200 shadow-lg hover:shadow-xl">
+                        <i class="fas fa-upload mr-2"></i>
+                        Upload Resource
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<div id="preview-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-lg bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Resource Preview</h3>
+                <button onclick="document.getElementById('preview-modal').classList.add('hidden')" 
+                        class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div id="preview-content" class="space-y-4">
+                <!-- Preview content will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleUploadMethod() {
+    const resourceType = document.getElementById('resource_type').value;
+    const methods = document.querySelectorAll('.upload-method');
+    
+    methods.forEach(method => method.classList.add('hidden'));
+    
+    if (resourceType === 'link') {
+        document.getElementById('link-input').classList.remove('hidden');
+    } else if (resourceType === 'file') {
+        document.getElementById('file-input').classList.remove('hidden');
+    } else if (resourceType === 'google_drive') {
+        document.getElementById('drive-input').classList.remove('hidden');
+    }
+}
+
+function updateFileName() {
+    const fileInput = document.getElementById('file-upload');
+    const fileName = document.getElementById('file-name');
+    
+    if (fileInput.files[0]) {
+        fileName.textContent = `Selected: ${fileInput.files[0].name}`;
+        fileName.classList.remove('hidden');
+    }
+}
+
+function updatePreview() {
+    const title = document.querySelector('[name="title"]').value || 'Untitled Resource';
+    const description = document.querySelector('[name="description"]').value || 'No description provided';
+    const resourceType = document.getElementById('resource_type').selectedOptions[0]?.text || 'External Link';
+    const isPublic = document.querySelector('[name="is_public"]').checked;
+    
+    document.getElementById('preview-content').innerHTML = `
+        <div class="bg-gray-50 p-4 rounded-lg">
+            <h4 class="text-xl font-semibold text-gray-900 mb-2">${title}</h4>
+            <p class="text-gray-600 mb-4">${description}</p>
+            <div class="flex flex-wrap gap-2">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                    ${resourceType}
+                </span>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isPublic ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                    ${isPublic ? '🌍 Public' : '🔒 Private'}
+                </span>
+            </div>
+        </div>
+    `;
+}
+
+// Update preview when opening modal
+document.querySelector('[onclick*="preview-modal"]').addEventListener('click', updatePreview);
+
+// Initialize upload method on page load
+document.addEventListener('DOMContentLoaded', toggleUploadMethod);
+</script>
+{% endblock %}

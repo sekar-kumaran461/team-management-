@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Google Database Setup Guide{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-4xl">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Google Database Setup Guide</h1>
+        <p class="text-gray-600">Setup a single Google account as your database backend</p>
+    </div>
+
+    <!-- Step 1 -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 class="text-2xl font-semibold mb-4 text-blue-600">Step 1: Create Google Cloud Project</h2>
+        <ol class="list-decimal list-inside space-y-3 text-gray-700">
+            <li>Go to <a href="https://console.cloud.google.com/" target="_blank" class="text-blue-600 underline">Google Cloud Console</a></li>
+            <li>Create a new project or select an existing one</li>
+            <li>Note down your project ID</li>
+        </ol>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 class="text-2xl font-semibold mb-4 text-blue-600">Step 2: Enable APIs</h2>
+        <p class="text-gray-700 mb-3">Enable the following APIs in your Google Cloud project:</p>
+        <ol class="list-decimal list-inside space-y-3 text-gray-700">
+            <li>
+                <strong>Google Sheets API</strong><br>
+                <a href="https://console.cloud.google.com/apis/library/sheets.googleapis.com" target="_blank" class="text-blue-600 underline text-sm">
+                    Enable Google Sheets API →
+                </a>
+            </li>
+            <li>
+                <strong>Google Drive API</strong><br>
+                <a href="https://console.cloud.google.com/apis/library/drive.googleapis.com" target="_blank" class="text-blue-600 underline text-sm">
+                    Enable Google Drive API →
+                </a>
+            </li>
+        </ol>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 class="text-2xl font-semibold mb-4 text-blue-600">Step 3: Create Service Account</h2>
+        <ol class="list-decimal list-inside space-y-3 text-gray-700">
+            <li>Go to <a href="https://console.cloud.google.com/iam-admin/serviceaccounts" target="_blank" class="text-blue-600 underline">IAM & Admin > Service Accounts</a></li>
+            <li>Click "Create Service Account"</li>
+            <li>Enter a name (e.g., "team-management-db")</li>
+            <li>Click "Create and Continue"</li>
+            <li>Skip the role assignment (click "Continue")</li>
+            <li>Click "Done"</li>
+        </ol>
+    </div>
+
+    <!-- Test -->
+    <div class="flex space-x-4 mt-8">
+        <a href="{% url 'google_integration:dashboard' %}" 
+           class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg">
+            Go to Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

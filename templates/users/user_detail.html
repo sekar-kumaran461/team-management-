@@ -1,0 +1,262 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ profile_user.full_name }} - User Details{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- User Header -->
+    <div class="bg-gradient-to-r from-primary-600 to-primary-700 text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <!-- Breadcrumb -->
+            <nav class="mb-8">
+                <ol class="flex items-center space-x-4 text-white text-opacity-80">
+                    <li>
+                        <a href="{% url 'users:user-management' %}" class="hover:text-white transition-colors duration-200">
+                            <i class="fas fa-users mr-2"></i>User Management
+                        </a>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-chevron-right mx-3"></i>
+                        <span class="text-white">{{ profile_user.full_name }}</span>
+                    </li>
+                </ol>
+            </nav>
+
+            <div class="flex items-start space-x-6">
+                <div class="flex-shrink-0">
+                    <div class="w-24 h-24 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                        <i class="fas fa-user text-4xl"></i>
+                    </div>
+                </div>
+                <div class="flex-1">
+                    <h1 class="text-4xl font-bold mb-2">{{ profile_user.full_name }}</h1>
+                    <p class="text-xl text-white text-opacity-90 mb-4">{{ profile_user.email }}</p>
+                    
+                    <div class="flex flex-wrap items-center gap-6">
+                        <div class="flex items-center">
+                            <i class="fas fa-user-tag mr-2"></i>
+                            <span>{{ profile_user.get_role_display|default:profile_user.role|capfirst }}</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-calendar-plus mr-2"></i>
+                            <span>Joined {{ profile_user.date_joined|date:"M d, Y" }}</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-sign-in-alt mr-2"></i>
+                            <span>Last login {{ profile_user.last_login|date:"M d, Y g:i A"|default:"Never" }}</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-circle mr-2 {% if profile_user.is_active %}text-green-400{% else %}text-red-400{% endif %}"></i>
+                            <span>{% if profile_user.is_active %}Active{% else %}Inactive{% endif %}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row gap-4">
+                    {% if user.role == 'admin' %}
+                    <a href="{% url 'users:user-edit' profile_user.pk %}" class="px-6 py-3 bg-white bg-opacity-20 text-white rounded-lg border border-white border-opacity-30 hover:bg-opacity-30 transition-all duration-300">
+                        <i class="fas fa-edit mr-2"></i>Edit User
+                    </a>
+                    {% endif %}
+                    
+                    {% if user.role == 'admin' and profile_user != user %}
+                    <a href="{% url 'users:toggle-user-status' profile_user.pk %}" class="px-6 py-3 bg-{% if profile_user.is_active %}red{% else %}green{% endif %}-600 text-white rounded-lg hover:bg-{% if profile_user.is_active %}red{% else %}green{% endif %}-700 transition-colors duration-300">
+                        <i class="fas fa-{% if profile_user.is_active %}user-times{% else %}user-check{% endif %} mr-2"></i>{% if profile_user.is_active %}Deactivate{% else %}Activate{% endif %}
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- User Statistics -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Stats Overview -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-tasks text-blue-600 text-xl"></i>
+                        </div>
+                        <div class="text-2xl font-bold text-gray-900 mb-1">{{ task_stats.total }}</div>
+                        <div class="text-sm text-gray-500">Total Tasks</div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                        </div>
+                        <div class="text-2xl font-bold text-gray-900 mb-1">{{ task_stats.completed }}</div>
+                        <div class="text-sm text-gray-500">Completed</div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+                        <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-clock text-yellow-600 text-xl"></i>
+                        </div>
+                        <div class="text-2xl font-bold text-gray-900 mb-1">{{ task_stats.in_progress }}</div>
+                        <div class="text-sm text-gray-500">In Progress</div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-star text-purple-600 text-xl"></i>
+                        </div>
+                        <div class="text-2xl font-bold text-gray-900 mb-1">{{ profile_user.total_points|default:0 }}</div>
+                        <div class="text-sm text-gray-500">Points</div>
+                    </div>
+                </div>
+
+                <!-- Recent Tasks -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-6">
+                        <i class="fas fa-list-check mr-2 text-primary-500"></i>Recent Tasks
+                    </h2>
+                    
+                    {% if user_tasks %}
+                    <div class="space-y-3">
+                        {% for task in user_tasks %}
+                        <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-primary-300 transition-colors duration-200">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center
+                                    {% if task.status == 'completed' %}bg-green-100
+                                    {% elif task.status == 'in_progress' %}bg-yellow-100
+                                    {% else %}bg-gray-100{% endif %}">
+                                    <i class="{% if task.status == 'completed' %}fas fa-check text-green-600
+                                              {% elif task.status == 'in_progress' %}fas fa-play text-yellow-600
+                                              {% else %}fas fa-circle text-gray-400{% endif %} text-sm"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-medium text-gray-900">{{ task.title }}</h3>
+                                    <div class="flex items-center space-x-4 mt-1">
+                                        <span class="text-sm text-gray-500">{{ task.get_status_display }}</span>
+                                        {% if task.due_date %}
+                                        <span class="text-sm text-gray-500">Due {{ task.due_date|date:"M d" }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <a href="{% url 'tasks:task-detail' task.id %}" class="text-primary-600 hover:text-primary-700">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-8">
+                        <i class="fas fa-tasks text-4xl text-gray-300 mb-4"></i>
+                        <p class="text-gray-500">No tasks assigned yet</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Recent Projects -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-6">
+                        <i class="fas fa-project-diagram mr-2 text-primary-500"></i>Projects
+                    </h2>
+                    
+                    {% if user_projects %}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {% for project in user_projects %}
+                        <div class="border border-gray-200 rounded-lg p-4 hover:border-primary-300 transition-colors duration-200">
+                            <h3 class="font-medium text-gray-900 mb-2">{{ project.name }}</h3>
+                            <p class="text-sm text-gray-500 mb-3">{{ project.description|truncatewords:10 }}</p>
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs px-2 py-1 rounded-full
+                                    {% if project.status == 'completed' %}bg-green-100 text-green-800
+                                    {% elif project.status == 'in_progress' %}bg-yellow-100 text-yellow-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ project.get_status_display }}
+                                </span>
+                                <a href="{% url 'projects:project-detail' project.id %}" class="text-primary-600 hover:text-primary-700 text-sm">
+                                    View <i class="fas fa-arrow-right ml-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-8">
+                        <i class="fas fa-project-diagram text-4xl text-gray-300 mb-4"></i>
+                        <p class="text-gray-500">No projects assigned yet</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="space-y-6">
+                <!-- User Profile Info -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                        <i class="fas fa-info-circle mr-2 text-primary-500"></i>Profile Information
+                    </h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-sm font-medium text-gray-500">Full Name</label>
+                            <div class="mt-1 text-sm text-gray-900">{{ profile_user.full_name }}</div>
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-500">Email</label>
+                            <div class="mt-1 text-sm text-gray-900">{{ profile_user.email }}</div>
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-500">Role</label>
+                            <div class="mt-1">
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+                                    {% if profile_user.role == 'admin' %}bg-red-100 text-red-800
+                                    {% elif profile_user.role == 'teacher' %}bg-blue-100 text-blue-800
+                                    {% else %}bg-green-100 text-green-800{% endif %}">
+                                    {{ profile_user.get_role_display|default:profile_user.role|capfirst }}
+                                </span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-500">Status</label>
+                            <div class="mt-1">
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+                                    {% if profile_user.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                    {% if profile_user.is_active %}Active{% else %}Inactive{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                        <i class="fas fa-history mr-2 text-primary-500"></i>Recent Activity
+                    </h3>
+                    <div class="space-y-3">
+                        {% if recent_activities %}
+                            {% for activity in recent_activities %}
+                            <div class="flex items-start space-x-3">
+                                <div class="flex-shrink-0">
+                                    <div class="w-6 h-6 bg-primary-100 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-circle text-primary-600 text-xs"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-sm text-gray-900">{{ activity.description }}</p>
+                                    <p class="text-xs text-gray-500">{{ activity.timestamp|timesince }} ago</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-history text-2xl text-gray-300 mb-2"></i>
+                            <p class="text-sm text-gray-500">No recent activity</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

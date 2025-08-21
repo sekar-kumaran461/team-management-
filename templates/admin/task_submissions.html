@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load tz %}
+{% block title %}Task Submissions Review{% endblock %}
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6">Task Submissions Review</h1>
+    <form method="get" class="mb-6 flex gap-4 flex-wrap">
+        <select name="user" class="border rounded px-3 py-2">
+            <option value="">All Students</option>
+            {% for user in users %}
+            <option value="{{ user.id }}" {% if user.id|stringformat:'s' == request.GET.user %}selected{% endif %}>{{ user.get_full_name|default:user.username }}</option>
+            {% endfor %}
+        </select>
+        <select name="status" class="border rounded px-3 py-2">
+            <option value="">All Statuses</option>
+            {% for code, label in status_choices %}
+            <option value="{{ code }}" {% if code == request.GET.status %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Filter</button>
+    </form>
+    <div class="overflow-x-auto">
+        <table class="min-w-full bg-white border rounded shadow">
+            <thead>
+                <tr class="bg-gray-100">
+                    <th class="px-4 py-2">Task</th>
+                    <th class="px-4 py-2">Student</th>
+                    <th class="px-4 py-2">Submitted At</th>
+                    <th class="px-4 py-2">Files/Links</th>
+                    <th class="px-4 py-2">Notes</th>
+                    <th class="px-4 py-2">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sub in submissions %}
+                <tr class="border-b">
+                    <td class="px-4 py-2 font-semibold">{{ sub.task.title }}</td>
+                    <td class="px-4 py-2">{{ sub.submitted_by.get_full_name|default:sub.submitted_by.username }}</td>
+                    <td class="px-4 py-2">{{ sub.submitted_at|timezone:"Asia/Kolkata"|date:"d M Y, H:i" }}</td>
+                    <td class="px-4 py-2">
+                        {% if sub.file_path %}
+                        <a href="{% url 'tasks:admin-view-file' sub.id %}" class="text-blue-600 underline">Files</a>
+                        {% endif %}
+                        {% if sub.external_url %}
+                        <a href="{{ sub.external_url }}" class="text-green-600 underline ml-2" target="_blank">Link</a>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-2">{{ sub.notes|default:'-' }}</td>
+                    <td class="px-4 py-2">
+                        <button onclick="openEnquiryModal('{{ sub.id }}', '{{ sub.submitted_by.get_full_name|default:sub.submitted_by.username }}')" class="bg-yellow-500 text-white px-3 py-1 rounded">Enquire</button>
+                        <a href="{% url 'tasks:task-detail' sub.task.id %}" class="bg-blue-500 text-white px-3 py-1 rounded ml-2">View</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-center py-6 text-gray-500">No submissions found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="mt-6">{{ submissions.paginator.num_pages }} pages | Page {{ submissions.number }} of {{ submissions.paginator.num_pages }}</div>
+    <div class="mt-4">{{ submissions.paginator.page_range|join:', ' }}</div>
+</div>
+<!-- Enquiry Modal -->
+<div id="enquiryModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+    <div class="bg-white rounded-xl p-6 max-w-md w-full">
+        <h2 class="text-xl font-bold mb-4">Send Enquiry</h2>
+        <form method="post" action="" id="enquiryForm">
+            {% csrf_token %}
+            <input type="hidden" name="submission_id" id="modalSubmissionId">
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2">To Student</label>
+                <input type="text" id="modalStudentName" class="w-full border rounded px-3 py-2" readonly>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2">Message</label>
+                <textarea name="message" rows="4" class="w-full border rounded px-3 py-2" required></textarea>
+            </div>
+            <div class="flex gap-3 justify-end">
+                <button type="button" onclick="closeEnquiryModal()" class="bg-gray-300 px-4 py-2 rounded">Cancel</button>
+                <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Send</button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+function openEnquiryModal(subId, studentName) {
+    document.getElementById('enquiryModal').classList.remove('hidden');
+    document.getElementById('modalSubmissionId').value = subId;
+    document.getElementById('modalStudentName').value = studentName;
+}
+function closeEnquiryModal() {
+    document.getElementById('enquiryModal').classList.add('hidden');
+}
+document.getElementById('enquiryModal').addEventListener('click', function(e) {
+    if (e.target === this) closeEnquiryModal();
+});
+</script>
+{% endblock %}

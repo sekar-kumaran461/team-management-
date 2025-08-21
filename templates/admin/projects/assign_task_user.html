@@ -1,0 +1,63 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+
+{% block title %}Assign Tasks to User{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Home</a>
+    &rsaquo; <a href="{% url 'admin:projects_projecttask_changelist' %}">Project Tasks</a>
+    &rsaquo; Assign Tasks
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="module aligned">
+    <h1>Assign Tasks to User</h1>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <fieldset class="module aligned">
+            <h2>Selected Tasks ({{ tasks|length }})</h2>
+            
+            <div class="form-row">
+                <ul>
+                    {% for task in tasks %}
+                        <li><strong>{{ task.title }}</strong> ({{ task.project.name }})
+                            {% if task.assigned_to %}
+                                - Currently assigned to: {{ task.assigned_to.get_full_name }}
+                            {% else %}
+                                - Unassigned
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </fieldset>
+        
+        <fieldset class="module aligned">
+            <h2>Select User</h2>
+            
+            <div class="form-row">
+                <label for="assigned_user">Assign to:</label>
+                <select name="assigned_user" id="assigned_user" required>
+                    <option value="">---------</option>
+                    {% for user in users %}
+                        <option value="{{ user.id }}">
+                            {{ user.get_full_name|default:user.email }} 
+                            ({{ user.get_role_display }})
+                        </option>
+                    {% endfor %}
+                </select>
+                <p class="help">Select a user to assign all selected tasks to.</p>
+            </div>
+        </fieldset>
+        
+        <div class="submit-row">
+            <input type="submit" value="Assign Tasks" class="default" />
+            <a href="{% url 'admin:projects_projecttask_changelist' %}" class="button cancel-link">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

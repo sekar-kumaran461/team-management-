@@ -1,0 +1,366 @@
+{% extends 'base.html' %}
+
+{% block title %}Analytics Dashboard - TeamLearn{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Page Header -->
+    <div class="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl shadow-lg p-8 text-white relative overflow-hidden">
+        <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white opacity-10 rounded-full"></div>
+        <div class="relative flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold">
+                    <i class="fas fa-chart-line mr-3"></i>
+                    Analytics Dashboard
+                </h1>
+                <p class="text-emerald-100 mt-2">Track team performance and learning progress</p>
+            </div>
+            <div class="flex space-x-3">
+                <button onclick="refreshData()" class="inline-flex items-center px-6 py-3 border border-white border-opacity-30 text-sm font-medium rounded-lg text-white bg-white bg-opacity-20 hover:bg-opacity-30 transition-all duration-200">
+                    <i class="fas fa-sync-alt mr-2"></i>
+                    Refresh Data
+                </button>
+                <button onclick="exportReport()" class="inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-lg text-emerald-600 bg-white hover:bg-gray-50 transition-all duration-200 shadow-md hover:shadow-lg">
+                    <i class="fas fa-download mr-2"></i>
+                    Export Report
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-users text-blue-600 text-xl"></i>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Active Users</h3>
+                    <div class="text-3xl font-bold text-gray-900">{{ analytics.active_users|default:0 }}</div>
+                    <p class="text-sm text-green-600">
+                        <i class="fas fa-arrow-up mr-1"></i>
+                        +12% from last week
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-tasks text-green-600 text-xl"></i>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Tasks Completed</h3>
+                    <div class="text-3xl font-bold text-gray-900">{{ analytics.completed_tasks|default:0 }}</div>
+                    <p class="text-sm text-green-600">
+                        <i class="fas fa-arrow-up mr-1"></i>
+                        +8% from last week
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-purple-500">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-graduation-cap text-purple-600 text-xl"></i>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Learning Hours</h3>
+                    <div class="text-3xl font-bold text-gray-900">{{ analytics.learning_hours|default:0 }}</div>
+                    <p class="text-sm text-green-600">
+                        <i class="fas fa-arrow-up mr-1"></i>
+                        +15% from last week
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-orange-500">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-trophy text-orange-600 text-xl"></i>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Team Score</h3>
+                    <div class="text-3xl font-bold text-gray-900">{{ analytics.team_score|default:0 }}</div>
+                    <p class="text-sm text-green-600">
+                        <i class="fas fa-arrow-up mr-1"></i>
+                        +5% from last week
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Task Completion Chart -->
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-semibold text-gray-900">Task Completion Trend</h2>
+                <select class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    <option>Last 7 days</option>
+                    <option>Last 30 days</option>
+                    <option>Last 3 months</option>
+                </select>
+            </div>
+            <div class="h-64">
+                <canvas id="taskCompletionChart"></canvas>
+            </div>
+        </div>
+
+        <!-- User Activity Chart -->
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-semibold text-gray-900">User Activity</h2>
+                <select class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    <option>This week</option>
+                    <option>This month</option>
+                    <option>This quarter</option>
+                </select>
+            </div>
+            <div class="h-64">
+                <canvas id="userActivityChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Tables -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Top Performers -->
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">Top Performers</h2>
+            <div class="space-y-4">
+                {% for performer in top_performers|slice:":5" %}
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                            {{ forloop.counter }}
+                        </div>
+                        <div class="ml-4">
+                            <p class="font-medium text-gray-900">{{ performer.name|default:"Unknown User" }}</p>
+                            <p class="text-sm text-gray-500">{{ performer.tasks_completed|default:0 }} tasks completed</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-bold text-green-600">{{ performer.points|default:0 }} pts</p>
+                        <p class="text-sm text-gray-500">{{ performer.completion_rate|default:0 }}% rate</p>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-8 text-gray-500">
+                    <i class="fas fa-chart-bar text-4xl mb-4"></i>
+                    <p>No performance data available yet</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Recent Activities -->
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">Recent Activities</h2>
+            <div class="space-y-4">
+                {% for activity in recent_activities|slice:":8" %}
+                <div class="flex items-center p-3 border-l-4 border-blue-400 bg-blue-50 rounded-r-lg">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                            <i class="fas fa-{{ activity.icon|default:'bell' }} text-white text-xs"></i>
+                        </div>
+                    </div>
+                    <div class="ml-3 flex-1">
+                        <p class="text-sm font-medium text-gray-900">
+                            {{ activity.description|default:"Activity recorded" }}
+                        </p>
+                        <p class="text-xs text-gray-500">
+                            {{ activity.timestamp|timesince }} ago
+                        </p>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-8 text-gray-500">
+                    <i class="fas fa-history text-4xl mb-4"></i>
+                    <p>No recent activities</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Reports -->
+    <div class="bg-white rounded-xl shadow-md p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-semibold text-gray-900">Detailed Reports</h2>
+            <button onclick="generateReport()" class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors duration-200">
+                <i class="fas fa-file-alt mr-2"></i>
+                Generate Report
+            </button>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-6 border border-blue-200">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-semibold text-blue-900">Task Analytics</h3>
+                    <i class="fas fa-tasks text-blue-600 text-xl"></i>
+                </div>
+                <p class="text-sm text-blue-800 mb-4">Comprehensive task completion and performance metrics</p>
+                <button onclick="viewTaskReport()" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                    View Report
+                </button>
+            </div>
+            
+            <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-6 border border-green-200">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-semibold text-green-900">User Engagement</h3>
+                    <i class="fas fa-users text-green-600 text-xl"></i>
+                </div>
+                <p class="text-sm text-green-800 mb-4">User activity patterns and engagement levels</p>
+                <button onclick="viewUserReport()" class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors duration-200">
+                    View Report
+                </button>
+            </div>
+            
+            <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-6 border border-purple-200">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-semibold text-purple-900">Learning Progress</h3>
+                    <i class="fas fa-graduation-cap text-purple-600 text-xl"></i>
+                </div>
+                <p class="text-sm text-purple-800 mb-4">Skill development and learning milestone tracking</p>
+                <button onclick="viewLearningReport()" class="w-full bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors duration-200">
+                    View Report
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Initialize charts when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initTaskCompletionChart();
+    initUserActivityChart();
+});
+
+function initTaskCompletionChart() {
+    const ctx = document.getElementById('taskCompletionChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            datasets: [{
+                label: 'Tasks Completed',
+                data: [12, 19, 8, 15, 22, 8, 18],
+                borderColor: 'rgb(59, 130, 246)',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+function initUserActivityChart() {
+    const ctx = document.getElementById('userActivityChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Active', 'Idle', 'Offline'],
+            datasets: [{
+                data: [65, 25, 10],
+                backgroundColor: [
+                    'rgb(34, 197, 94)',
+                    'rgb(251, 191, 36)',
+                    'rgb(239, 68, 68)'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+function refreshData() {
+    // Show loading state
+    showNotification('Refreshing analytics data...', 'info');
+    
+    // Simulate API call
+    setTimeout(() => {
+        showNotification('Analytics data updated!', 'success');
+        // Refresh charts and data
+    }, 2000);
+}
+
+function exportReport() {
+    showNotification('Generating report...', 'info');
+    // Implement report export
+}
+
+function generateReport() {
+    showNotification('Generating detailed report...', 'info');
+    // Implement detailed report generation
+}
+
+function viewTaskReport() {
+    window.location.href = '/analytics/tasks/';
+}
+
+function viewUserReport() {
+    window.location.href = '/analytics/users/';
+}
+
+function viewLearningReport() {
+    window.location.href = '/analytics/learning/';
+}
+
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 ${
+        type === 'success' ? 'bg-green-100 border border-green-400 text-green-700' :
+        type === 'error' ? 'bg-red-100 border border-red-400 text-red-700' :
+        'bg-blue-100 border border-blue-400 text-blue-700'
+    }`;
+    notification.innerHTML = `
+        <div class="flex items-center">
+            <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : 'info'} mr-2"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+</script>
+{% endblock %}

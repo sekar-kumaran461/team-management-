@@ -1,0 +1,146 @@
+# Django Team Management - Render Deployment Guide
+
+This guide will help you deploy your Django Team Management application to Render.
+
+## Prerequisites
+
+1. **GitHub Repository**: Your code must be in a GitHub repository
+2. **Render Account**: Sign up at [render.com](https://render.com)
+3. **Environment Variables**: Prepare your environment variables
+
+## Step 1: Prepare Your Repository
+
+1. Make sure all your code is committed and pushed to GitHub
+2. Ensure your repository is public or you have a paid Render plan for private repos
+
+## Step 2: Create a New Web Service on Render
+
+1. Go to [render.com](https://render.com) and sign in
+2. Click "New +" and select "Web Service"
+3. Connect your GitHub repository
+4. Select your team management repository
+
+## Step 3: Configure Your Web Service
+
+### Basic Settings:
+- **Name**: `team-management` (or your preferred name)
+- **Environment**: `Python 3`
+- **Build Command**: `./build.sh`
+- **Start Command**: `gunicorn team_management.wsgi:application`
+- **Plan**: `Free` (for testing) or `Starter` (for production)
+
+### Environment Variables:
+Add these environment variables in the Render dashboard:
+
+#### Required Variables:
+```
+DEBUG=False
+SECRET_KEY=[Generate a new secret key - Render can auto-generate this]
+ALLOWED_HOSTS=your-app-name.onrender.com
+DATABASE_URL=[This will be automatically set when you add a database]
+```
+
+#### Optional Variables (for full functionality):
+```
+# Google OAuth (if using Google login)
+GOOGLE_OAUTH2_CLIENT_ID=your_google_client_id
+GOOGLE_OAUTH2_CLIENT_SECRET=your_google_client_secret
+
+# Google Drive Integration (if using file uploads to Drive)
+GOOGLE_SERVICE_ACCOUNT_JSON=your_service_account_json
+GOOGLE_DRIVE_FOLDER_ID=your_drive_folder_id
+GOOGLE_DATABASE_SPREADSHEET_ID=your_spreadsheet_id
+
+# Email Settings (for notifications)
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=your_email@gmail.com
+EMAIL_HOST_PASSWORD=your_app_password
+
+# Redis (for Celery tasks - only if you need background tasks)
+CELERY_BROKER_URL=redis://your-redis-url
+CELERY_RESULT_BACKEND=redis://your-redis-url
+```
+
+## Step 4: Add a PostgreSQL Database
+
+1. In Render dashboard, click "New +" and select "PostgreSQL"
+2. Configure the database:
+   - **Name**: `team-management-db`
+   - **Database Name**: `team_management`
+   - **User**: `team_management_user`
+   - **Plan**: `Free` (for testing)
+
+3. Once created, copy the "External Database URL"
+4. Add it as `DATABASE_URL` environment variable in your web service
+
+## Step 5: Deploy
+
+1. Click "Create Web Service"
+2. Render will automatically:
+   - Clone your repository
+   - Run the build script (`build.sh`)
+   - Install dependencies
+   - Collect static files
+   - Run database migrations
+   - Start your application
+
+## Step 6: Post-Deployment Setup
+
+### Create a Superuser (Optional)
+You can create a Django superuser by connecting to your service via SSH:
+1. Go to your service dashboard
+2. Click "Shell" tab
+3. Run: `python manage.py createsuperuser`
+
+### Test Your Application
+1. Visit your Render URL (e.g., `https://your-app-name.onrender.com`)
+2. Test user registration and login
+3. Verify that static files are loading correctly
+
+## Common Issues and Solutions
+
+### Static Files Not Loading
+- Make sure `whitenoise` is in your requirements.txt
+- Verify `STATIC_ROOT` and `STATICFILES_STORAGE` settings
+- Check that `python manage.py collectstatic` runs without errors
+
+### Database Connection Issues
+- Verify `DATABASE_URL` environment variable is set correctly
+- Make sure migrations have run successfully
+- Check that PostgreSQL service is running
+
+### Environment Variables
+- Double-check all environment variable names and values
+- Use Render's environment variable tab, don't put secrets in code
+- Some variables are case-sensitive
+
+### Build Failures
+- Check the build logs in Render dashboard
+- Ensure all dependencies are in requirements.txt
+- Verify that build.sh has execute permissions (chmod +x build.sh)
+
+## Security Considerations
+
+1. **Never commit secrets** to your repository
+2. **Use environment variables** for all sensitive data
+3. **Set DEBUG=False** in production
+4. **Use a strong SECRET_KEY** (let Render generate one)
+5. **Configure proper ALLOWED_HOSTS**
+
+## Scaling and Performance
+
+- Start with the Free plan for testing
+- Upgrade to Starter ($7/month) for production use
+- Consider upgrading PostgreSQL for better performance
+- Add Redis for caching and background tasks if needed
+
+## Monitoring
+
+- Use Render's built-in logs and metrics
+- Set up error monitoring (Sentry, etc.)
+- Monitor database performance
+- Set up uptime monitoring
+
+Your Django Team Management application should now be successfully deployed on Render!

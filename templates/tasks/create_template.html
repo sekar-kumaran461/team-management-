@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Template - TeamLearn{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+            <nav class="flex items-center space-x-2 text-sm text-gray-500 mb-4">
+                <a href="{% url 'tasks:task-templates' %}" class="hover:text-gray-700">Templates</a>
+                <i class="fas fa-chevron-right text-xs"></i>
+                <span class="text-gray-900">Create Template</span>
+            </nav>
+            
+            <div class="flex items-start justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900 mb-2">Create Task Template</h1>
+                    <p class="text-gray-600">Create a reusable template from scratch or from an existing task</p>
+                </div>
+                <a href="{% url 'tasks:task-templates' %}" 
+                   class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Back to Templates
+                </a>
+            </div>
+        </div>
+
+        <!-- Template Creation Options -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            
+            <!-- Create from Existing Task -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+                        <i class="fas fa-copy text-blue-600 text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">From Existing Task</h3>
+                        <p class="text-sm text-gray-600">Create template based on an existing task</p>
+                    </div>
+                </div>
+                
+                <form method="post" class="space-y-4">
+                    {% csrf_token %}
+                    
+                    <div>
+                        <label for="template_name_existing" class="block text-sm font-medium text-gray-700 mb-2">
+                            Template Name
+                        </label>
+                        <input type="text" name="template_name" id="template_name_existing" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="Enter template name" required>
+                    </div>
+                    
+                    <div>
+                        <label for="template_description_existing" class="block text-sm font-medium text-gray-700 mb-2">
+                            Description
+                        </label>
+                        <textarea name="template_description" id="template_description_existing" rows="3"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="Describe the template purpose"></textarea>
+                    </div>
+                    
+                    <div>
+                        <label for="task_id" class="block text-sm font-medium text-gray-700 mb-2">
+                            Select Task
+                        </label>
+                        <select name="task_id" id="task_id" 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">Choose a task...</option>
+                            {% for task in user_tasks %}
+                            <option value="{{ task.id }}">
+                                {{ task.title }} ({{ task.get_status_display }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <button type="submit" 
+                            class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-copy mr-2"></i>
+                        Create from Task
+                    </button>
+                </form>
+            </div>
+
+            <!-- Create Blank Template -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
+                        <i class="fas fa-plus text-green-600 text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">Blank Template</h3>
+                        <p class="text-sm text-gray-600">Start with a blank template</p>
+                    </div>
+                </div>
+                
+                <form method="post" class="space-y-4">
+                    {% csrf_token %}
+                    
+                    <div>
+                        <label for="template_name_blank" class="block text-sm font-medium text-gray-700 mb-2">
+                            Template Name
+                        </label>
+                        <input type="text" name="template_name" id="template_name_blank" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                               placeholder="Enter template name" required>
+                    </div>
+                    
+                    <div>
+                        <label for="template_description_blank" class="block text-sm font-medium text-gray-700 mb-2">
+                            Description
+                        </label>
+                        <textarea name="template_description" id="template_description_blank" rows="3"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                placeholder="Describe the template purpose"></textarea>
+                    </div>
+                    
+                    <div class="bg-green-50 rounded-lg p-4">
+                        <div class="flex items-start">
+                            <i class="fas fa-info-circle text-green-600 mr-2 mt-1"></i>
+                            <div class="text-sm text-green-700">
+                                <p class="font-medium mb-1">Creating a blank template</p>
+                                <p>You can customize the template structure after creation by editing tasks created from this template.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" 
+                            class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 transition-colors">
+                        <i class="fas fa-plus mr-2"></i>
+                        Create Blank Template
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Your Recent Tasks (for reference) -->
+        {% if user_tasks %}
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-history text-purple-600 mr-2"></i>
+                Your Recent Tasks
+                <span class="ml-2 text-sm font-normal text-gray-500">(Available for template creation)</span>
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for task in user_tasks %}
+                <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                    <div class="flex items-start justify-between mb-2">
+                        <h3 class="text-sm font-medium text-gray-900 truncate">{{ task.title }}</h3>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium 
+                            {% if task.status == 'completed' %}bg-green-100 text-green-800
+                            {% elif task.status == 'in_progress' %}bg-blue-100 text-blue-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ task.get_status_display }}
+                        </span>
+                    </div>
+                    
+                    <p class="text-xs text-gray-600 mb-3 line-clamp-2">
+                        {{ task.description|truncatechars:100 }}
+                    </p>
+                    
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            {% if task.category %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                                {{ task.category.name }}
+                            </span>
+                            {% endif %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                                {{ task.get_priority_display }}
+                            </span>
+                        </div>
+                        
+                        <button onclick="selectTaskForTemplate({{ task.id }}, '{{ task.title|escapejs }}')" 
+                                class="text-purple-600 hover:text-purple-800 text-sm">
+                            <i class="fas fa-arrow-up"></i>
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+<script>
+function selectTaskForTemplate(taskId, taskTitle) {
+    // Fill the "from existing task" form
+    document.getElementById('task_id').value = taskId;
+    document.getElementById('template_name_existing').value = 'Template: ' + taskTitle;
+    
+    // Scroll to the form
+    document.getElementById('task_id').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    
+    // Focus on the template name field
+    setTimeout(() => {
+        document.getElementById('template_name_existing').focus();
+    }, 500);
+}
+
+// Form validation
+document.addEventListener('DOMContentLoaded', function() {
+    const forms = document.querySelectorAll('form');
+    forms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            const templateName = form.querySelector('input[name="template_name"]').value.trim();
+            if (!templateName) {
+                e.preventDefault();
+                alert('Please enter a template name.');
+                return;
+            }
+            
+            const hasTaskId = form.querySelector('select[name="task_id"]');
+            if (hasTaskId && !hasTaskId.value) {
+                const confirmed = confirm('No task selected. This will create a blank template. Continue?');
+                if (!confirmed) {
+                    e.preventDefault();
+                }
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
