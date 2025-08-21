@@ -81,17 +81,17 @@ else
         
         # STRATEGY 3: Minimal essential packages
         echo "🔄 Strategy 3: Attempting minimal essential packages..."
-        if pip install --no-build-isolation Django==4.2.7 gunicorn==20.1.0 whitenoise==6.5.0 python-decouple==3.8; then
-            echo "✅ Minimal core packages installed successfully"
+        if pip install --no-build-isolation Django==4.2.7 gunicorn==20.1.0 whitenoise==6.5.0 python-decouple==3.8 django-allauth==0.54.0; then
+            echo "✅ Minimal core packages with allauth installed successfully"
             DB_TYPE="sqlite"
             PACKAGE_SET="minimal"
             
-            # Try to add critical packages one by one
-            echo "📦 Adding critical packages individually..."
+            # Try to add other critical packages one by one
+            echo "📦 Adding additional critical packages individually..."
             pip install dj-database-url==2.1.0 || echo "⚠️  dj-database-url failed"
-            pip install django-allauth==0.54.0 || echo "⚠️  django-allauth failed"
             pip install djangorestframework==3.14.0 || echo "⚠️  djangorestframework failed"
             pip install Pillow==9.5.0 || echo "⚠️  Pillow failed"
+            pip install django-cors-headers==4.3.1 || echo "⚠️  django-cors-headers failed"
             
         else
             echo "⚠️  Minimal installation failed, trying emergency strategy..."
