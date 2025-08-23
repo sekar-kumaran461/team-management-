@@ -116,9 +116,9 @@ except ImportError:
 try:
     import allauth
     MIDDLEWARE.insert(-2, 'allauth.account.middleware.AccountMiddleware')
-    print("✅ Added allauth middleware")
+    print("[SUCCESS] Added allauth middleware")
 except ImportError:
-    print("⚠️  django-allauth not available, skipping allauth middleware")
+    print("[WARNING] django-allauth not available, skipping allauth middleware")
     pass
 
 ROOT_URLCONF = 'team_management.urls'
@@ -145,33 +145,23 @@ WSGI_APPLICATION = 'team_management.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-# Always try PostgreSQL first when Supabase environment variables are present
-if config('SUPABASE_HOST', default=None):
-    print("🗄️  Configuring PostgreSQL database with Supabase")
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': config('SUPABASE_DATABASE', default='postgres'),
-            'USER': config('SUPABASE_USER', default='postgres.xvwwawadfeqnrwmozeai'),
-            'PASSWORD': config('SUPABASE_PASSWORD', default='Vif2025team$'),
-            'HOST': config('SUPABASE_HOST', default='aws-1-ap-southeast-1.pooler.supabase.com'),
-            'PORT': config('SUPABASE_PORT', default='6543', cast=int),
-            'OPTIONS': {
-                'sslmode': 'require',
-            },
-            'CONN_MAX_AGE': 600,
-            'CONN_HEALTH_CHECKS': True,
-        }
+# Always use Supabase PostgreSQL - no SQLite fallback
+print("[DATABASE] Configuring PostgreSQL database with Supabase")
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': config('SUPABASE_DATABASE', default='postgres'),
+        'USER': config('SUPABASE_USER', default='postgres.xvwwawadfeqnrwmozeai'),
+        'PASSWORD': config('SUPABASE_PASSWORD', default='Vif2025team$'),
+        'HOST': config('SUPABASE_HOST', default='aws-1-ap-southeast-1.pooler.supabase.com'),
+        'PORT': config('SUPABASE_PORT', default='6543', cast=int),
+        'OPTIONS': {
+            'sslmode': 'require',
+        },
+        'CONN_MAX_AGE': 600,
+        'CONN_HEALTH_CHECKS': True,
     }
-else:
-    # Fallback to SQLite for local development only
-    print("ℹ️  Using SQLite database for local development")
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
+}
 
 
 # Password validation
@@ -247,10 +237,10 @@ if USE_GOOGLE_DRIVE and GOOGLE_DRIVE_FOLDER_ID:
         GS_QUERYSTRING_AUTH = False
         
         MEDIA_URL = f'https://storage.googleapis.com/{GS_BUCKET_NAME}/'
-        print("✅ Google Drive storage configured")
+        print("[SUCCESS] Google Drive storage configured")
         
     except ImportError:
-        print("⚠️  django-storages not available, using local media storage")
+        print("[WARNING] django-storages not available, using local media storage")
         MEDIA_URL = '/media/'
         MEDIA_ROOT = BASE_DIR / 'media'
 else:
@@ -396,3 +386,33 @@ LOGGING = {
         'level': 'INFO',
     },
 }
+
+# =============================================================================
+# SECURITY SETTINGS FOR PRODUCTION DEPLOYMENT
+# =============================================================================
+
+# Security settings for production
+if not DEBUG:
+    # HTTPS settings
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    
+    # Cookie security
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    CSRF_COOKIE_HTTPONLY = True
+    
+    # Additional security headers
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_BROWSER_XSS_FILTER = True
+    X_FRAME_OPTIONS = 'DENY'
+    
+    # Referrer policy
+    SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+
+# Data upload limits
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
