@@ -1,4 +1,8 @@
+# ================# =====================================
+# AUTHENTICATION (ESSENTIAL)
 # =====================================
+django-allauth==0.63.6
+PyJWT==2.9.0=================
 # CRITICAL REQUIREMENTS FOR RENDER DEPLOYMENT
 # Python 3.11.9 compatible packages only
 # =====================================
