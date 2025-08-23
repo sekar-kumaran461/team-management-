@@ -1,52 +1,45 @@
-# Production Requirements for Django Team Management Application
-# Optimized for Render deployment with Supabase and Google Drive
-# Compatible with Python 3.11+ 
+# =====================================
+# CRITICAL REQUIREMENTS FOR RENDER DEPLOYMENT
+# Python 3.11.9 compatible packages only
+# =====================================
 
 # =====================================
-# CORE DJANGO FRAMEWORK
+# CORE DJANGO
 # =====================================
 Django==4.2.7
 gunicorn==21.2.0
 whitenoise==6.6.0
-python-decouple==3.8
 
 # =====================================
-# DATABASE SUPPORT
+# DATABASE
 # =====================================
 psycopg2-binary==2.9.9
 dj-database-url==2.1.0
 
 # =====================================
-# AUTHENTICATION & APIs
+# AUTHENTICATION (ESSENTIAL)
 # =====================================
 django-allauth==0.57.0
-djangorestframework==3.15.2
-django-cors-headers==4.3.1
 
 # =====================================
-# FILE HANDLING & MEDIA
+# FILE HANDLING (ESSENTIAL)
 # =====================================
 Pillow==10.1.0
 
 # =====================================
-# GOOGLE INTEGRATION
+# GOOGLE INTEGRATION (ESSENTIAL)
 # =====================================
 google-api-python-client==2.108.0
-google-auth-httplib2==0.2.0
-google-auth-oauthlib==1.1.0
 google-auth==2.25.2
-gspread==5.12.0
-django-storages[google]==1.14.2
 
 # =====================================
-# DATA PROCESSING (OPTIONAL - for Excel support)
-# =====================================
-# pandas==2.2.2  # Commented out due to Python 3.13 compatibility issues
-openpyxl==3.1.2
-
-# =====================================
-# UTILITIES
+# UTILITIES (ESSENTIAL)
 # =====================================
 requests==2.31.0
-python-dateutil==2.8.2
+python-decouple==3.8
 pytz==2023.3
+
+# =====================================
+# PRODUCTION ONLY
+# =====================================
+django-storages==1.14.2
