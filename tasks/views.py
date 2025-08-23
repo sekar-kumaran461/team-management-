@@ -2354,3 +2354,463 @@ def generate_recurring_tasks_manual(request):
         messages.error(request, f'Error generating recurring tasks: {str(e)}')
     
     return redirect('tasks:recurring-templates')
+
+
+# ============================================================================
+# BULK UPLOAD VIEWS
+# ============================================================================
+
+@login_required
+def bulk_upload_daily_tasks(request):
+    """Bulk upload daily tasks from Excel file"""
+    if not (request.user.is_superuser or 
+            request.user.groups.filter(name__in=['Admin', 'Manager', 'Team Lead']).exists()):
+        messages.error(request, 'You do not have permission to bulk upload tasks.')
+        return redirect('tasks:task-list')
+    
+    if request.method == 'POST':
+        if 'excel_file' not in request.FILES:
+            messages.error(request, 'Please select an Excel file to upload.')
+            return redirect('tasks:create-recurring-template')
+        
+        excel_file = request.FILES['excel_file']
+        
+        try:
+            import pandas as pd
+            import uuid
+            from datetime import datetime, date
+            
+            # Read Excel file
+            df = pd.read_excel(excel_file)
+            
+            # Validate required columns
+            required_columns = ['date', 'task_title', 'task_description']
+            missing_columns = [col for col in required_columns if col not in df.columns]
+            
+            if missing_columns:
+                messages.error(request, f'Missing required columns: {", ".join(missing_columns)}')
+                return redirect('tasks:create-recurring-template')
+            
+            # Generate batch ID
+            batch_id = f"daily_bulk_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            
+            # Get or create category
+            category, _ = TaskCategory.objects.get_or_create(
+                name='Daily Bulk Upload',
+                defaults={
+                    'description': 'Tasks uploaded via daily bulk upload',
+                    'color': '#3B82F6',
+                    'icon': 'fas fa-upload'
+                }
+            )
+            
+            created_count = 0
+            errors = []
+            
+            for index, row in df.iterrows():
+                try:
+                    # Parse date
+                    if pd.isna(row['date']):
+                        errors.append(f"Row {index + 2}: Date is missing")
+                        continue
+                    
+                    task_date = pd.to_datetime(row['date']).date()
+                    
+                    # Get assigned user if specified
+                    assigned_user = None
+                    if 'assigned_to_email' in df.columns and not pd.isna(row['assigned_to_email']):
+                        try:
+                            assigned_user = User.objects.get(email=row['assigned_to_email'])
+                        except User.DoesNotExist:
+                            errors.append(f"Row {index + 2}: User with email {row['assigned_to_email']} not found")
+                    
+                    # Create task
+                    task = Task.objects.create(
+                        title=str(row['task_title']),
+                        description=str(row['task_description']) if not pd.isna(row['task_description']) else '',
+                        category=category,
+                        assigned_to=assigned_user,
+                        created_by=request.user,
+                        due_date=task_date,
+                        priority=str(row.get('priority', 'medium')).lower() if 'priority' in df.columns and not pd.isna(row.get('priority')) else 'medium',
+                        estimated_hours=float(row.get('estimated_hours', 1.0)) if 'estimated_hours' in df.columns and not pd.isna(row.get('estimated_hours')) else 1.0,
+                        points_value=int(row.get('points_value', 10)) if 'points_value' in df.columns and not pd.isna(row.get('points_value')) else 10,
+                        status='todo',
+                        is_recurring=True,
+                        recurrence_type='daily',
+                        instance_date=task_date,
+                        import_batch=batch_id,
+                        assigned_to_all=True,  # Make visible to all users by default
+                        allow_member_selection=True
+                    )
+                    created_count += 1
+                    
+                except Exception as e:
+                    errors.append(f"Row {index + 2}: {str(e)}")
+            
+            # Show results
+            if created_count > 0:
+                messages.success(request, f'Successfully created {created_count} daily tasks. Batch ID: {batch_id}')
+                
+                # Log activity
+                UserActivity.objects.create(
+                    user=request.user,
+                    activity_type='bulk_upload',
+                    description=f"Bulk uploaded {created_count} daily tasks",
+                    additional_info=f"Batch ID: {batch_id}"
+                )
+            
+            if errors:
+                error_message = f"Errors encountered: {'; '.join(errors[:5])}"
+                if len(errors) > 5:
+                    error_message += f" and {len(errors) - 5} more..."
+                messages.warning(request, error_message)
+                
+        except Exception as e:
+            messages.error(request, f'Error processing Excel file: {str(e)}')
+    
+    return redirect('tasks:create-recurring-template')
+
+
+@login_required
+def bulk_upload_weekly_tasks(request):
+    """Bulk upload weekly tasks from Excel file"""
+    if not (request.user.is_superuser or 
+            request.user.groups.filter(name__in=['Admin', 'Manager', 'Team Lead']).exists()):
+        messages.error(request, 'You do not have permission to bulk upload tasks.')
+        return redirect('tasks:task-list')
+    
+    if request.method == 'POST':
+        if 'excel_file' not in request.FILES:
+            messages.error(request, 'Please select an Excel file to upload.')
+            return redirect('tasks:create-recurring-template')
+        
+        excel_file = request.FILES['excel_file']
+        
+        try:
+            import pandas as pd
+            import uuid
+            from datetime import datetime, date
+            
+            # Read Excel file
+            df = pd.read_excel(excel_file)
+            
+            # Validate required columns
+            required_columns = ['start_date', 'end_date', 'task_title', 'task_description', 'weekday']
+            missing_columns = [col for col in required_columns if col not in df.columns]
+            
+            if missing_columns:
+                messages.error(request, f'Missing required columns: {", ".join(missing_columns)}')
+                return redirect('tasks:create-recurring-template')
+            
+            # Generate batch ID
+            batch_id = f"weekly_bulk_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            
+            # Get or create category
+            category, _ = TaskCategory.objects.get_or_create(
+                name='Weekly Bulk Upload',
+                defaults={
+                    'description': 'Tasks uploaded via weekly bulk upload',
+                    'color': '#10B981',
+                    'icon': 'fas fa-calendar-week'
+                }
+            )
+            
+            created_count = 0
+            errors = []
+            
+            for index, row in df.iterrows():
+                try:
+                    # Parse dates
+                    if pd.isna(row['start_date']) or pd.isna(row['end_date']):
+                        errors.append(f"Row {index + 2}: Start date or end date is missing")
+                        continue
+                    
+                    start_date = pd.to_datetime(row['start_date']).date()
+                    end_date = pd.to_datetime(row['end_date']).date()
+                    weekday = str(row['weekday']).lower()
+                    
+                    # Validate weekday
+                    weekday_map = {
+                        'monday': 0, 'tuesday': 1, 'wednesday': 2, 'thursday': 3,
+                        'friday': 4, 'saturday': 5, 'sunday': 6,
+                        'mon': 0, 'tue': 1, 'wed': 2, 'thu': 3,
+                        'fri': 4, 'sat': 5, 'sun': 6
+                    }
+                    
+                    if weekday not in weekday_map:
+                        errors.append(f"Row {index + 2}: Invalid weekday '{weekday}'")
+                        continue
+                    
+                    target_weekday = weekday_map[weekday]
+                    
+                    # Get assigned user if specified
+                    assigned_user = None
+                    if 'assigned_to_email' in df.columns and not pd.isna(row['assigned_to_email']):
+                        try:
+                            assigned_user = User.objects.get(email=row['assigned_to_email'])
+                        except User.DoesNotExist:
+                            errors.append(f"Row {index + 2}: User with email {row['assigned_to_email']} not found")
+                    
+                    # Generate tasks for each week in the date range
+                    current_date = start_date
+                    while current_date <= end_date:
+                        if current_date.weekday() == target_weekday:
+                            task = Task.objects.create(
+                                title=f"{str(row['task_title'])} - Week of {current_date.strftime('%Y-%m-%d')}",
+                                description=str(row['task_description']) if not pd.isna(row['task_description']) else '',
+                                category=category,
+                                assigned_to=assigned_user,
+                                created_by=request.user,
+                                due_date=current_date,
+                                priority=str(row.get('priority', 'medium')).lower() if 'priority' in df.columns and not pd.isna(row.get('priority')) else 'medium',
+                                estimated_hours=float(row.get('estimated_hours', 2.0)) if 'estimated_hours' in df.columns and not pd.isna(row.get('estimated_hours')) else 2.0,
+                                points_value=int(row.get('points_value', 20)) if 'points_value' in df.columns and not pd.isna(row.get('points_value')) else 20,
+                                status='todo',
+                                is_recurring=True,
+                                recurrence_type='weekly',
+                                recurrence_days=weekday[:3],
+                                instance_date=current_date,
+                                import_batch=batch_id,
+                                assigned_to_all=True,  # Make visible to all users by default
+                                allow_member_selection=True
+                            )
+                            created_count += 1
+                        
+                        current_date += pd.Timedelta(days=1)
+                    
+                except Exception as e:
+                    errors.append(f"Row {index + 2}: {str(e)}")
+            
+            # Show results
+            if created_count > 0:
+                messages.success(request, f'Successfully created {created_count} weekly tasks. Batch ID: {batch_id}')
+                
+                # Log activity
+                UserActivity.objects.create(
+                    user=request.user,
+                    activity_type='bulk_upload',
+                    description=f"Bulk uploaded {created_count} weekly tasks",
+                    additional_info=f"Batch ID: {batch_id}"
+                )
+            
+            if errors:
+                error_message = f"Errors encountered: {'; '.join(errors[:5])}"
+                if len(errors) > 5:
+                    error_message += f" and {len(errors) - 5} more..."
+                messages.warning(request, error_message)
+                
+        except Exception as e:
+            messages.error(request, f'Error processing Excel file: {str(e)}')
+    
+    return redirect('tasks:create-recurring-template')
+
+
+@login_required 
+def download_daily_template(request):
+    """Download Excel template for daily tasks"""
+    import pandas as pd
+    from django.http import HttpResponse
+    from datetime import datetime, timedelta
+    
+    # Create sample data for the template
+    start_date = datetime.now().date()
+    sample_data = []
+    
+    for i in range(7):  # One week of sample data
+        date = start_date + timedelta(days=i)
+        sample_data.append({
+            'date': date.strftime('%Y-%m-%d'),
+            'task_title': f'Daily Task {i+1}',
+            'task_description': f'Description for daily task {i+1}. This is a sample task.',
+            'priority': 'medium',
+            'estimated_hours': 1.0,
+            'points_value': 10,
+            'assigned_to_email': 'user@example.com'  # Optional
+        })
+    
+    # Create DataFrame
+    df = pd.DataFrame(sample_data)
+    
+    # Create response
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="daily_tasks_template_{datetime.now().strftime("%Y%m%d")}.xlsx"'
+    
+    # Write to Excel
+    with pd.ExcelWriter(response, engine='openpyxl') as writer:
+        # Instructions sheet
+        instructions = pd.DataFrame({
+            'INSTRUCTIONS': [
+                '1. Fill in the required columns: date, task_title, task_description',
+                '2. Optional columns: priority (low/medium/high/urgent), estimated_hours, points_value, assigned_to_email',
+                '3. Date format: YYYY-MM-DD (e.g., 2025-08-23)',
+                '4. If assigned_to_email is empty, task will be visible to all users',
+                '5. Priority options: low, medium, high, urgent, critical',
+                '6. Delete this instructions sheet and sample data before uploading',
+                '',
+                'REQUIRED COLUMNS:',
+                '- date: Date for the task (YYYY-MM-DD format)',
+                '- task_title: Title of the task',
+                '- task_description: Detailed description of the task',
+                '',
+                'OPTIONAL COLUMNS:',
+                '- priority: Task priority (default: medium)',
+                '- estimated_hours: Hours needed to complete (default: 1.0)',
+                '- points_value: Points awarded for completion (default: 10)',
+                '- assigned_to_email: Email of user to assign (leave empty for all users)'
+            ]
+        })
+        instructions.to_excel(writer, sheet_name='Instructions', index=False)
+        
+        # Sample data sheet
+        df.to_excel(writer, sheet_name='Daily Tasks', index=False)
+    
+    return response
+
+
+@login_required
+def download_weekly_template(request):
+    """Download Excel template for weekly tasks"""
+    import pandas as pd
+    from django.http import HttpResponse
+    from datetime import datetime, timedelta
+    
+    # Create sample data for the template
+    start_date = datetime.now().date()
+    end_date = start_date + timedelta(days=30)  # One month range
+    
+    sample_data = [
+        {
+            'start_date': start_date.strftime('%Y-%m-%d'),
+            'end_date': end_date.strftime('%Y-%m-%d'),
+            'task_title': 'Weekly Team Meeting',
+            'task_description': 'Weekly team standup and planning meeting',
+            'weekday': 'Monday',
+            'priority': 'high',
+            'estimated_hours': 2.0,
+            'points_value': 20,
+            'assigned_to_email': ''  # Empty for all users
+        },
+        {
+            'start_date': start_date.strftime('%Y-%m-%d'),
+            'end_date': end_date.strftime('%Y-%m-%d'),
+            'task_title': 'Weekly Report',
+            'task_description': 'Submit weekly progress report',
+            'weekday': 'Friday',
+            'priority': 'medium',
+            'estimated_hours': 1.0,
+            'points_value': 15,
+            'assigned_to_email': ''
+        },
+        {
+            'start_date': start_date.strftime('%Y-%m-%d'),
+            'end_date': end_date.strftime('%Y-%m-%d'),
+            'task_title': 'Code Review Session',
+            'task_description': 'Weekly code review and feedback session',
+            'weekday': 'Wednesday',
+            'priority': 'medium',
+            'estimated_hours': 1.5,
+            'points_value': 18,
+            'assigned_to_email': ''
+        }
+    ]
+    
+    # Create DataFrame
+    df = pd.DataFrame(sample_data)
+    
+    # Create response
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="weekly_tasks_template_{datetime.now().strftime("%Y%m%d")}.xlsx"'
+    
+    # Write to Excel
+    with pd.ExcelWriter(response, engine='openpyxl') as writer:
+        # Instructions sheet
+        instructions = pd.DataFrame({
+            'INSTRUCTIONS': [
+                '1. Fill in the required columns: start_date, end_date, task_title, task_description, weekday',
+                '2. Optional columns: priority, estimated_hours, points_value, assigned_to_email',
+                '3. Date format: YYYY-MM-DD (e.g., 2025-08-23)',
+                '4. Weekday options: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday',
+                '5. Tasks will be created for every occurrence of the weekday between start_date and end_date',
+                '6. If assigned_to_email is empty, task will be visible to all users',
+                '7. Delete this instructions sheet and sample data before uploading',
+                '',
+                'REQUIRED COLUMNS:',
+                '- start_date: Start date of the weekly task series (YYYY-MM-DD)',
+                '- end_date: End date of the weekly task series (YYYY-MM-DD)',
+                '- task_title: Title of the weekly task',
+                '- task_description: Detailed description of the task',
+                '- weekday: Day of the week (Monday, Tuesday, etc.)',
+                '',
+                'OPTIONAL COLUMNS:',
+                '- priority: Task priority (default: medium)',
+                '- estimated_hours: Hours needed to complete (default: 2.0)',
+                '- points_value: Points awarded for completion (default: 20)',
+                '- assigned_to_email: Email of user to assign (leave empty for all users)'
+            ]
+        })
+        instructions.to_excel(writer, sheet_name='Instructions', index=False)
+        
+        # Sample data sheet
+        df.to_excel(writer, sheet_name='Weekly Tasks', index=False)
+    
+    return response
+
+
+@login_required
+def download_task_file(request, task_id):
+    """Download task file attachment"""
+    try:
+        task = Task.objects.get(id=task_id)
+        
+        # Check if user has permission to access this task
+        if not (task.assigned_to_all or 
+                task.assigned_to == request.user or 
+                request.user.is_superuser or
+                request.user.groups.filter(name__in=['Admin', 'Manager', 'Team Lead']).exists()):
+            messages.error(request, 'You do not have permission to access this task file.')
+            return redirect('tasks:task-list')
+        
+        # Get task files
+        task_files = TaskFile.objects.filter(task=task)
+        
+        if not task_files.exists():
+            messages.error(request, 'No files found for this task.')
+            return redirect('tasks:task-detail', pk=task_id)
+        
+        # If only one file, download it directly
+        if task_files.count() == 1:
+            task_file = task_files.first()
+            response = HttpResponse(content_type='application/octet-stream')
+            response['Content-Disposition'] = f'attachment; filename="{task_file.filename}"'
+            
+            # Read file content and return
+            try:
+                with open(task_file.file_path, 'rb') as f:
+                    response.write(f.read())
+                return response
+            except FileNotFoundError:
+                messages.error(request, 'File not found on server.')
+                return redirect('tasks:task-detail', pk=task_id)
+        
+        # If multiple files, create a zip
+        import zipfile
+        import io
+        
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
+            for task_file in task_files:
+                try:
+                    zip_file.write(task_file.file_path, task_file.filename)
+                except FileNotFoundError:
+                    continue
+        
+        zip_buffer.seek(0)
+        response = HttpResponse(zip_buffer.read(), content_type='application/zip')
+        response['Content-Disposition'] = f'attachment; filename="{task.title}_files.zip"'
+        
+        return response
+        
+    except Task.DoesNotExist:
+        messages.error(request, 'Task not found.')
+        return redirect('tasks:task-list')

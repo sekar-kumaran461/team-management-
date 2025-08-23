@@ -21,3 +21,8 @@ cryptography==43.0.3
 requests==2.32.3
 python-decouple==3.8
 pytz==2024.1
+
+# Data processing (for bulk uploads)
+numpy==1.26.4
+pandas==2.2.2
+openpyxl==3.1.5

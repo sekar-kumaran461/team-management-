@@ -56,5 +56,12 @@ urlpatterns = [
     path('recurring/templates/', views.recurring_templates_view, name='recurring-templates'),
     path('recurring/templates/create/', views.create_recurring_template, name='create-recurring-template'),
     path('recurring/generate/', views.generate_recurring_tasks_manual, name='generate-recurring-tasks'),
+    
+    # Bulk upload features
+    path('bulk-upload/daily/', views.bulk_upload_daily_tasks, name='bulk-upload-daily'),
+    path('bulk-upload/weekly/', views.bulk_upload_weekly_tasks, name='bulk-upload-weekly'),
+    path('download-template/daily/', views.download_daily_template, name='download-daily-template'),
+    path('download-template/weekly/', views.download_weekly_template, name='download-weekly-template'),
+    path('<int:task_id>/download-file/', views.download_task_file, name='download-task-file'),
 
 ]
