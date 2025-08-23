@@ -36,12 +36,20 @@ echo "📦 Phase 2: Installing Python packages..."
 python -m pip install --upgrade pip
 
 # Install requirements
-if [ -f "requirements-production.txt" ]; then
-    echo "Installing from requirements-production.txt..."
-    pip install -r requirements-production.txt
-elif [ -f "requirements.txt" ]; then
+if [ -f "requirements.txt" ]; then
     echo "Installing from requirements.txt..."
-    pip install -r requirements.txt
+    pip install -r requirements.txt || {
+        echo "❌ Main requirements failed, trying minimal requirements..."
+        if [ -f "requirements-minimal.txt" ]; then
+            pip install -r requirements-minimal.txt
+        else
+            echo "❌ No fallback requirements available"
+            exit 1
+        fi
+    }
+elif [ -f "requirements-minimal.txt" ]; then
+    echo "Installing from requirements-minimal.txt..."
+    pip install -r requirements-minimal.txt
 else
     echo "❌ No requirements file found!"
     exit 1
