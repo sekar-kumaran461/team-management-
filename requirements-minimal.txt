@@ -3,7 +3,7 @@
 # =====================================
 django-allauth==0.63.6
 PyJWT==2.9.0
-cryptography==41.0.8=================
+cryptography==43.0.3=================
 # CRITICAL REQUIREMENTS FOR RENDER DEPLOYMENT
 # Python 3.11.9 compatible packages only
 # =====================================
