@@ -6,16 +6,55 @@ from django.views.generic import TemplateView, DetailView, UpdateView, FormView
 from django.contrib import messages
 from django.urls import reverse_lazy
 from django.db.models import Count, Q
-from rest_framework import viewsets, permissions, status
-from rest_framework.decorators import action
-from rest_framework.response import Response
+
+# Try to import REST framework components
+try:
+    from rest_framework import viewsets, permissions, status
+    from rest_framework.decorators import action
+    from rest_framework.response import Response
+    HAS_REST_FRAMEWORK = True
+except ImportError:
+    HAS_REST_FRAMEWORK = False
+    # Create dummy classes for when REST framework is not available
+    class ViewSets:
+        class ModelViewSet:
+            pass
+    viewsets = ViewSets()
+    
+    class Permissions:
+        class IsAuthenticated:
+            pass
+    permissions = Permissions()
+    
+    class Status:
+        HTTP_200_OK = 200
+        HTTP_400_BAD_REQUEST = 400
+        HTTP_404_NOT_FOUND = 404
+    status = Status()
+    
+    def action(*args, **kwargs):
+        def decorator(func):
+            return func
+        return decorator
+    
+    class Response:
+        def __init__(self, data=None, status=None):
+            self.data = data
+            self.status = status
+
 from .models import User, UserProfile
-from .serializers import UserSerializer, UserProfileSerializer
 from .forms import UserProfileForm, UserRegistrationForm, LoginForm
 from tasks.models import Task
 from projects.models import Project
 from analytics.models import UserActivity
 from django.utils import timezone
+
+# Try to import serializers conditionally
+try:
+    from .serializers import UserSerializer, UserProfileSerializer
+    HAS_SERIALIZERS = True
+except ImportError:
+    HAS_SERIALIZERS = False
 
 class DashboardView(LoginRequiredMixin, TemplateView):
     """Main dashboard view"""
@@ -350,69 +389,77 @@ def export_users(request):
     
     return response
 
-# API ViewSets
-class UserViewSet(viewsets.ModelViewSet):
-    """User API ViewSet"""
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    
-    def get_queryset(self):
-        # Filter by team membership if user is not admin
-        if not self.request.user.role in ['admin', 'team_lead']:
-            return User.objects.filter(is_active=True)
-        return super().get_queryset()
-    
-    @action(detail=True, methods=['post'])
-    def add_points(self, request, pk=None):
-        """Add points to user"""
-        user = self.get_object()
-        points = request.data.get('points', 0)
-        reason = request.data.get('reason', 'Points awarded')
+# API ViewSets - Only available if REST framework is installed
+if HAS_REST_FRAMEWORK and HAS_SERIALIZERS:
+    class UserViewSet(viewsets.ModelViewSet):
+        """User API ViewSet"""
+        queryset = User.objects.all()
+        serializer_class = UserSerializer
+        permission_classes = [permissions.IsAuthenticated]
         
-        try:
-            user.add_points(points, reason)
-            return Response({'status': 'Points added successfully'})
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-    
-    @action(detail=True, methods=['get'])
-    def progress(self, request, pk=None):
-        """Get user progress data"""
-        user = self.get_object()
-        
-        # Get user's task progress
-        user_tasks = Task.objects.filter(assigned_to=user)
-        completed_tasks = user_tasks.filter(status='completed').count()
-        total_tasks = user_tasks.count()
-        
-        # Get user's project progress
-        user_projects = Project.objects.filter(team_members=user)
-        completed_projects = user_projects.filter(status='completed').count()
-        total_projects = user_projects.count()
-        
-        progress_data = {
-            'total_points': user.total_points,
-            'level': user.level,
-            'badges_earned': user.badges_earned,
-            'task_completion_rate': (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0,
-            'project_completion_rate': (completed_projects / total_projects * 100) if total_projects > 0 else 0,
-            'completed_tasks': completed_tasks,
-            'total_tasks': total_tasks,
-            'completed_projects': completed_projects,
-            'total_projects': total_projects,
-        }
-        
-        return Response(progress_data)
-
-class UserProfileViewSet(viewsets.ModelViewSet):
-    """User Profile API ViewSet"""
-    queryset = UserProfile.objects.all()
-    serializer_class = UserProfileSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    
-    def get_queryset(self):
-        # Users can only access their own profile unless they're admin
-        if self.request.user.role in ['admin', 'team_lead']:
+        def get_queryset(self):
+            # Filter by team membership if user is not admin
+            if not self.request.user.role in ['admin', 'team_lead']:
+                return User.objects.filter(is_active=True)
             return super().get_queryset()
-        return UserProfile.objects.filter(user=self.request.user)
+        
+        @action(detail=True, methods=['post'])
+        def add_points(self, request, pk=None):
+            """Add points to user"""
+            user = self.get_object()
+            points = request.data.get('points', 0)
+            reason = request.data.get('reason', 'Points awarded')
+            
+            try:
+                user.add_points(points, reason)
+                return Response({'status': 'Points added successfully'})
+            except Exception as e:
+                return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+        @action(detail=True, methods=['get'])
+        def progress(self, request, pk=None):
+            """Get user progress data"""
+            user = self.get_object()
+            
+            # Get user's task progress
+            user_tasks = Task.objects.filter(assigned_to=user)
+            completed_tasks = user_tasks.filter(status='completed').count()
+            total_tasks = user_tasks.count()
+            
+            # Get user's project progress
+            user_projects = Project.objects.filter(team_members=user)
+            completed_projects = user_projects.filter(status='completed').count()
+            total_projects = user_projects.count()
+            
+            progress_data = {
+                'total_points': user.total_points,
+                'level': user.level,
+                'badges_earned': user.badges_earned,
+                'task_completion_rate': (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0,
+                'project_completion_rate': (completed_projects / total_projects * 100) if total_projects > 0 else 0,
+                'completed_tasks': completed_tasks,
+                'total_tasks': total_tasks,
+                'completed_projects': completed_projects,
+                'total_projects': total_projects,
+            }
+            
+            return Response(progress_data)
+
+    class UserProfileViewSet(viewsets.ModelViewSet):
+        """User Profile API ViewSet"""
+        queryset = UserProfile.objects.all()
+        serializer_class = UserProfileSerializer
+        permission_classes = [permissions.IsAuthenticated]
+        
+        def get_queryset(self):
+            # Users can only access their own profile unless they're admin
+            if self.request.user.role in ['admin', 'team_lead']:
+                return super().get_queryset()
+            return UserProfile.objects.filter(user=self.request.user)
+else:
+    # Dummy ViewSets when REST framework is not available
+    class UserViewSet:
+        pass
+    
+    class UserProfileViewSet:
+        pass

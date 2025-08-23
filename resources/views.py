@@ -4,10 +4,46 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.contrib import messages
 from django.db import models
-from rest_framework import viewsets, permissions, status
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework.decorators import action
+
+# Try to import REST framework components
+try:
+    from rest_framework import viewsets, permissions, status
+    from rest_framework.response import Response
+    from rest_framework.views import APIView
+    from rest_framework.decorators import action
+    HAS_REST_FRAMEWORK = True
+except ImportError:
+    HAS_REST_FRAMEWORK = False
+    # Create dummy classes
+    class ViewSets:
+        class ModelViewSet:
+            pass
+    viewsets = ViewSets()
+    
+    class APIView:
+        pass
+    
+    class Permissions:
+        class IsAuthenticated:
+            pass
+    permissions = Permissions()
+    
+    class Status:
+        HTTP_200_OK = 200
+        HTTP_400_BAD_REQUEST = 400
+        HTTP_404_NOT_FOUND = 404
+    status = Status()
+    
+    def action(*args, **kwargs):
+        def decorator(func):
+            return func
+        return decorator
+    
+    class Response:
+        def __init__(self, data=None, status=None):
+            self.data = data
+            self.status = status
+
 from .models import Resource, ResourceCategory, ResourceFile, StudyMaterial, ResourceLike, ResourceDownload
 from .forms import ResourceUploadForm, ResourceSearchForm, ResourceCategoryForm
 
@@ -119,105 +155,123 @@ class MyResourcesView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         return Resource.objects.filter(uploaded_by=self.request.user).order_by('-created_at')
 
-# API ViewSets
-class ResourceViewSet(viewsets.ModelViewSet):
-    queryset = Resource.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
-    
-    def get_queryset(self):
-        queryset = Resource.objects.filter(is_public=True)
-        # Allow users to see their own private resources
-        if self.request.user.is_authenticated:
-            queryset = queryset.filter(
-                models.Q(is_public=True) | models.Q(uploaded_by=self.request.user)
-            )
-        return queryset.order_by('-created_at')
-    
-    def get_serializer_class(self):
-        from rest_framework import serializers
-        from django.db import models
-        class ResourceSerializer(serializers.ModelSerializer):
-            class Meta:
-                model = Resource
-                fields = '__all__'
-        return ResourceSerializer
-    
-    @action(detail=True, methods=['post'])
-    def like(self, request, pk=None):
-        """Like/unlike a resource"""
-        resource = self.get_object()
-        like, created = ResourceLike.objects.get_or_create(resource=resource, user=request.user)
+# API ViewSets - Only available if REST framework is installed
+if HAS_REST_FRAMEWORK:
+    class ResourceViewSet(viewsets.ModelViewSet):
+        queryset = Resource.objects.all()
+        permission_classes = [permissions.IsAuthenticated]
         
-        if not created:
-            like.delete()
-            return Response({'status': 'unliked'})
-        return Response({'status': 'liked'})
+        def get_queryset(self):
+            queryset = Resource.objects.filter(is_public=True)
+            # Allow users to see their own private resources
+            if self.request.user.is_authenticated:
+                queryset = queryset.filter(
+                    models.Q(is_public=True) | models.Q(uploaded_by=self.request.user)
+                )
+            return queryset.order_by('-created_at')
+        
+        def get_serializer_class(self):
+            from rest_framework import serializers
+            from django.db import models
+            class ResourceSerializer(serializers.ModelSerializer):
+                class Meta:
+                    model = Resource
+                    fields = '__all__'
+            return ResourceSerializer
+        
+        @action(detail=True, methods=['post'])
+        def like(self, request, pk=None):
+            """Like/unlike a resource"""
+            resource = self.get_object()
+            like, created = ResourceLike.objects.get_or_create(resource=resource, user=request.user)
+            
+            if not created:
+                like.delete()
+                return Response({'status': 'unliked'})
+            return Response({'status': 'liked'})
 
-class ResourceCategoryViewSet(viewsets.ModelViewSet):
-    queryset = ResourceCategory.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
-    
-    def get_serializer_class(self):
-        from rest_framework import serializers
-        class ResourceCategorySerializer(serializers.ModelSerializer):
-            class Meta:
-                model = ResourceCategory
-                fields = '__all__'
-        return ResourceCategorySerializer
+    class ResourceCategoryViewSet(viewsets.ModelViewSet):
+        queryset = ResourceCategory.objects.all()
+        permission_classes = [permissions.IsAuthenticated]
+        
+        def get_serializer_class(self):
+            from rest_framework import serializers
+            class ResourceCategorySerializer(serializers.ModelSerializer):
+                class Meta:
+                    model = ResourceCategory
+                    fields = '__all__'
+            return ResourceCategorySerializer
 
-class StudyMaterialViewSet(viewsets.ModelViewSet):
-    queryset = StudyMaterial.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
-    
-    def get_queryset(self):
-        return StudyMaterial.objects.filter(resource__is_public=True)
-    
-    def get_serializer_class(self):
-        from rest_framework import serializers
-        class StudyMaterialSerializer(serializers.ModelSerializer):
-            class Meta:
-                model = StudyMaterial
-                fields = '__all__'
-        return StudyMaterialSerializer
+    class StudyMaterialViewSet(viewsets.ModelViewSet):
+        queryset = StudyMaterial.objects.all()
+        permission_classes = [permissions.IsAuthenticated]
+        
+        def get_queryset(self):
+            return StudyMaterial.objects.filter(resource__is_public=True)
+        
+        def get_serializer_class(self):
+            from rest_framework import serializers
+            class StudyMaterialSerializer(serializers.ModelSerializer):
+                class Meta:
+                    model = StudyMaterial
+                    fields = '__all__'
+            return StudyMaterialSerializer
 
-class GoogleDriveUploadAPIView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
-    
-    def post(self, request):
-        # Placeholder for Google Drive upload functionality
-        return Response({'message': 'Google Drive upload endpoint - implementation pending'})
+    class GoogleDriveUploadAPIView(APIView):
+        permission_classes = [permissions.IsAuthenticated]
+        
+        def post(self, request):
+            # Placeholder for Google Drive upload functionality
+            return Response({'message': 'Google Drive upload endpoint - implementation pending'})
 
-class ResourceSearchAPIView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
-    
-    def get(self, request):
-        query = request.GET.get('q', '')
-        category = request.GET.get('category', '')
+    class ResourceSearchAPIView(APIView):
+        permission_classes = [permissions.IsAuthenticated]
         
-        resources = Resource.objects.filter(is_public=True)
-        
-        if query:
-            resources = resources.filter(
-                models.Q(title__icontains=query) | 
-                models.Q(description__icontains=query) |
-                models.Q(tags__icontains=query)
-            )
-        
-        if category:
-            resources = resources.filter(category_id=category)
-        
-        resource_data = []
-        for resource in resources[:20]:  # Limit results
-            resource_data.append({
-                'id': resource.id,
-                'title': resource.title,
-                'description': resource.description,
-                'category': resource.category.name if resource.category else None,
-                'uploaded_by': resource.uploaded_by.get_full_name(),
-                'created_at': resource.created_at,
+        def get(self, request):
+            query = request.GET.get('q', '')
+            category = request.GET.get('category', '')
+            
+            resources = Resource.objects.filter(is_public=True)
+            
+            if query:
+                resources = resources.filter(
+                    models.Q(title__icontains=query) | 
+                    models.Q(description__icontains=query) |
+                    models.Q(tags__icontains=query)
+                )
+            
+            if category:
+                resources = resources.filter(category_id=category)
+            
+            resource_data = []
+            for resource in resources[:20]:  # Limit results
+                resource_data.append({
+                    'id': resource.id,
+                    'title': resource.title,
+                    'description': resource.description,
+                    'category': resource.category.name if resource.category else None,
+                    'uploaded_by': resource.uploaded_by.get_full_name(),
+                    'created_at': resource.created_at,
+                })
+            
+            return Response({
+                'results': resource_data,
+                'total': len(resource_data)
             })
-        
-        return Response({
-            'results': resource_data,
-            'total': len(resource_data)
-        })
+
+else:
+    # Dummy classes when REST framework is not available
+    class ResourceViewSet:
+        pass
+    
+    class ResourceCategoryViewSet:
+        pass
+    
+    class StudyMaterialViewSet:
+        pass
+    
+    class GoogleDriveUploadAPIView:
+        pass
+    
+    class ResourceSearchAPIView:
+        pass

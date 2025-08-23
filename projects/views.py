@@ -3,12 +3,54 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.contrib import messages
-from rest_framework import viewsets, permissions, status
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework.decorators import action
+
+# Try to import REST framework components
+try:
+    from rest_framework import viewsets, permissions, status
+    from rest_framework.response import Response
+    from rest_framework.views import APIView
+    from rest_framework.decorators import action
+    HAS_REST_FRAMEWORK = True
+except ImportError:
+    HAS_REST_FRAMEWORK = False
+    # Create dummy classes
+    class ViewSets:
+        class ModelViewSet:
+            pass
+    viewsets = ViewSets()
+    
+    class APIView:
+        pass
+    
+    class Permissions:
+        class IsAuthenticated:
+            pass
+    permissions = Permissions()
+    
+    class Status:
+        HTTP_200_OK = 200
+        HTTP_400_BAD_REQUEST = 400
+        HTTP_404_NOT_FOUND = 404
+    status = Status()
+    
+    def action(*args, **kwargs):
+        def decorator(func):
+            return func
+        return decorator
+    
+    class Response:
+        def __init__(self, data=None, status=None):
+            self.data = data
+            self.status = status
+
 from .models import Project, ProjectCategory, ProjectMilestone, ProjectSubmission, WeeklyProjectReview
-from .serializers import ProjectSerializer, ProjectMilestoneSerializer, ProjectSubmissionSerializer
+
+# Try to import serializers conditionally
+try:
+    from .serializers import ProjectSerializer, ProjectMilestoneSerializer, ProjectSubmissionSerializer
+    HAS_SERIALIZERS = True
+except ImportError:
+    HAS_SERIALIZERS = False
 
 # Web Views
 class ProjectListView(LoginRequiredMixin, ListView):
@@ -108,121 +150,114 @@ class MyProjectsView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         return Project.objects.filter(team_members=self.request.user).order_by('-created_at')
 
-# API ViewSets
-class ProjectViewSet(viewsets.ModelViewSet):
-    queryset = Project.objects.all()
-    serializer_class = ProjectSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    
-    def get_queryset(self):
+# API ViewSets - Only available if REST framework is installed
+if HAS_REST_FRAMEWORK and HAS_SERIALIZERS:
+    class ProjectViewSet(viewsets.ModelViewSet):
         queryset = Project.objects.all()
-        # Filter by user's projects if not admin/team_lead
-        if not self.request.user.can_manage_users():
-            queryset = queryset.filter(team_members=self.request.user)
-        return queryset
-    
-    @action(detail=True, methods=['post'])
-    def update_progress(self, request, pk=None):
-        """Update project progress"""
-        project = self.get_object()
-        progress = request.data.get('progress', 0)
+        serializer_class = ProjectSerializer
+        permission_classes = [permissions.IsAuthenticated]
         
-        try:
-            project.progress_percentage = min(100, max(0, int(progress)))
-            project.save()
-            return Response({'status': 'Progress updated successfully'})
-        except (ValueError, TypeError):
-            return Response({'error': 'Invalid progress value'}, status=status.HTTP_400_BAD_REQUEST)
-
-class ProjectMilestoneViewSet(viewsets.ModelViewSet):
-    queryset = ProjectMilestone.objects.all()
-    serializer_class = ProjectMilestoneSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    
-    def get_queryset(self):
-        if 'project_pk' in self.kwargs:
-            return ProjectMilestone.objects.filter(project_id=self.kwargs['project_pk'])
-        return ProjectMilestone.objects.all()
-
-class ProjectSubmissionViewSet(viewsets.ModelViewSet):
-    queryset = ProjectSubmission.objects.all()
-    serializer_class = ProjectSubmissionSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    
-    def get_queryset(self):
-        if 'project_pk' in self.kwargs:
-            return ProjectSubmission.objects.filter(project_id=self.kwargs['project_pk'])
-        return ProjectSubmission.objects.all()
-
-# API Views
-class ProjectProgressAPIView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
-    
-    def get(self, request):
-        user = request.user
-        projects = Project.objects.filter(team_members=user)
+        def get_queryset(self):
+            queryset = Project.objects.all()
+            # Filter by user's projects if not admin/team_lead
+            if not self.request.user.can_manage_users():
+                queryset = queryset.filter(team_members=self.request.user)
+            return queryset
         
-        progress_data = []
-        for project in projects:
-            progress_data.append({
-                'id': project.id,
-                'title': project.title,
-                'progress_percentage': project.progress_percentage,
-                'status': project.status,
-                'estimated_duration_weeks': project.estimated_duration_weeks,
-            })
+        @action(detail=True, methods=['post'])
+        def update_progress(self, request, pk=None):
+            """Update project progress"""
+            project = self.get_object()
+            progress = request.data.get('progress', 0)
+            
+            try:
+                project.progress_percentage = min(100, max(0, int(progress)))
+                project.save()
+                return Response({'status': 'Progress updated successfully'})
+            except (ValueError, TypeError):
+                return Response({'error': 'Invalid progress value'}, status=status.HTTP_400_BAD_REQUEST)
+
+    class ProjectMilestoneViewSet(viewsets.ModelViewSet):
+        queryset = ProjectMilestone.objects.all()
+        serializer_class = ProjectMilestoneSerializer
+        permission_classes = [permissions.IsAuthenticated]
         
-        return Response(progress_data)
+        def get_queryset(self):
+            if 'project_pk' in self.kwargs:
+                return ProjectMilestone.objects.filter(project_id=self.kwargs['project_pk'])
+            return ProjectMilestone.objects.all()
 
-class WeeklyReviewAPIView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
-    
-    def get(self, request):
-        user = request.user
-        reviews = WeeklyProjectReview.objects.filter(reviewer=user).order_by('-week_ending')[:10]
+    class ProjectSubmissionViewSet(viewsets.ModelViewSet):
+        queryset = ProjectSubmission.objects.all()
+        serializer_class = ProjectSubmissionSerializer
+        permission_classes = [permissions.IsAuthenticated]
         
-        review_data = []
-        for review in reviews:
-            review_data.append({
-                'id': review.id,
-                'project_title': review.project.title,
-                'week_ending': review.week_ending,
-                'progress_rating': review.progress_rating,
-                'accomplishments': review.accomplishments,
-                'challenges': review.challenges,
-            })
+        def get_queryset(self):
+            if 'project_pk' in self.kwargs:
+                return ProjectSubmission.objects.filter(project_id=self.kwargs['project_pk'])
+            return ProjectSubmission.objects.all()
+
+    # API Views
+    class ProjectProgressAPIView(APIView):
+        permission_classes = [permissions.IsAuthenticated]
         
-        return Response(review_data)
-    
-    def get_serializer_class(self):
-        from rest_framework import serializers
-        class ProjectSerializer(serializers.ModelSerializer):
-            class Meta:
-                model = Project
-                fields = '__all__'
-        return ProjectSerializer
+        def get(self, request):
+            user = request.user
+            projects = Project.objects.filter(team_members=user)
+            
+            progress_data = []
+            for project in projects:
+                progress_data.append({
+                    'id': project.id,
+                    'title': project.title,
+                    'progress_percentage': project.progress_percentage,
+                    'status': project.status,
+                    'estimated_duration_weeks': project.estimated_duration_weeks,
+                })
+            
+            return Response(progress_data)
 
-# Temporarily commented out until ProjectTask model is enabled
-# class ProjectTaskViewSet(viewsets.ModelViewSet):
-#     queryset = ProjectTask.objects.all()
-#     permission_classes = [permissions.IsAuthenticated]
-#     
-#     def get_serializer_class(self):
-#         from rest_framework import serializers
-#         class ProjectTaskSerializer(serializers.ModelSerializer):
-#             class Meta:
-#                 model = ProjectTask
-#                 fields = '__all__'
-#         return ProjectTaskSerializer
+    class WeeklyReviewAPIView(APIView):
+        permission_classes = [permissions.IsAuthenticated]
+        
+        def get(self, request):
+            user = request.user
+            reviews = WeeklyProjectReview.objects.filter(reviewer=user).order_by('-week_ending')[:10]
+            
+            review_data = []
+            for review in reviews:
+                review_data.append({
+                    'id': review.id,
+                    'project_title': review.project.title,
+                    'week_ending': review.week_ending,
+                    'progress_rating': review.progress_rating,
+                    'accomplishments': review.accomplishments,
+                    'challenges': review.challenges,
+                })
+            
+            return Response(review_data)
+        
+        def get_serializer_class(self):
+            from rest_framework import serializers
+            class ProjectSerializer(serializers.ModelSerializer):
+                class Meta:
+                    model = Project
+                    fields = '__all__'
+            return ProjectSerializer
 
-class ProjectProgressAPIView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+else:
+    # Dummy classes when REST framework is not available
+    class ProjectViewSet:
+        pass
     
-    def get(self, request):
-        return Response({'message': 'Project progress endpoint'})
-
-class WeeklyReviewAPIView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    class ProjectMilestoneViewSet:
+        pass
     
-    def get(self, request):
-        return Response({'message': 'Weekly review endpoint'})
+    class ProjectSubmissionViewSet:
+        pass
+    
+    class ProjectProgressAPIView:
+        pass
+    
+    class WeeklyReviewAPIView:
+        pass
