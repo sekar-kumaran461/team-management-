@@ -15,6 +15,7 @@ dj-database-url==2.2.0
 # Authentication
 django-allauth==0.63.6
 PyJWT==2.9.0
+cryptography==41.0.8
 
 # Basic utilities
 requests==2.32.3
