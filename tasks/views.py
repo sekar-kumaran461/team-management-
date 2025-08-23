@@ -2356,6 +2356,13 @@ def generate_recurring_tasks_manual(request):
     return redirect('tasks:recurring-templates')
 
 
+@login_required
+def redirect_to_enhanced_bulk_upload(request):
+    """Redirect old bulk upload URL to new enhanced page"""
+    messages.info(request, 'Bulk upload has been enhanced! Use the new daily and weekly upload options below.')
+    return redirect('tasks:create-recurring-template')
+
+
 # ============================================================================
 # BULK UPLOAD VIEWS
 # ============================================================================

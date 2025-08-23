@@ -20,8 +20,8 @@ urlpatterns = [
     path('<int:task_id>/submit/', views.submit_task, name='submit-task'),
     path('<int:task_id>/progress/', views.task_progress, name='task-progress'),
     
-    # Bulk operations
-    path('bulk-upload/', views.BulkTaskUploadView.as_view(), name='bulk-upload'),
+    # Bulk operations - redirect to new enhanced page
+    path('bulk-upload/', views.redirect_to_enhanced_bulk_upload, name='bulk-upload'),
     path('export/', views.export_tasks, name='export-tasks'),
     
     # User views
