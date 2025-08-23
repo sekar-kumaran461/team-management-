@@ -4,15 +4,18 @@ services:
     env: python
     runtime: python-3.11.6
     buildCommand: "./build.sh"
-    startCommand: "python -m gunicorn team_management.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --timeout 120"
-    plan: free
+    startCommand: "gunicorn team_management.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120 --max-requests 1000 --preload"
+    plan: starter  # Changed to starter for better performance
     envVars:
+      # Core Django Settings
       - key: DEBUG
-        value: False
+        value: "False"
       - key: SECRET_KEY
         generateValue: true
       - key: ALLOWED_HOSTS
         value: "*"
+      
+      # Database Configuration (Supabase)
       - key: SUPABASE_HOST
         value: aws-1-ap-southeast-1.pooler.supabase.com
       - key: SUPABASE_PORT
@@ -23,8 +26,26 @@ services:
         value: postgres.xvwwawadfeqnrwmozeai
       - key: SUPABASE_PASSWORD
         value: "Vif2025team$"
-      - key: SUPABASE_POOL_MODE
-        value: transaction
+      
+      # Google Drive Integration (Optional - add your values)
+      - key: USE_GOOGLE_DRIVE
+        value: "True"
+      - key: GOOGLE_SERVICE_ACCOUNT_JSON
+        value: ""  # Add your service account JSON here
+      - key: GOOGLE_DRIVE_FOLDER_ID
+        value: ""  # Add your Google Drive folder ID here
+      - key: GOOGLE_CLOUD_STORAGE_BUCKET
+        value: "team-management-media"
+      - key: GOOGLE_CLOUD_PROJECT_ID
+        value: ""  # Add your Google Cloud project ID
+      
+      # Google OAuth (Optional)
+      - key: GOOGLE_OAUTH2_CLIENT_ID
+        value: ""  # Add your Google OAuth client ID
+      - key: GOOGLE_OAUTH2_CLIENT_SECRET
+        value: ""  # Add your Google OAuth client secret
+      
+      # Performance Settings
       - key: PYTHON_VERSION
         value: "3.11.6"
       - key: DISABLE_COLLECTSTATIC
@@ -33,5 +54,8 @@ services:
         value: "1"
       - key: PYTHONUNBUFFERED
         value: "1"
+      - key: WEB_CONCURRENCY
+        value: "2"
 
-# Note: No separate PostgreSQL service needed since we're using Supabase
+# Note: Using Supabase as external database service
+# No separate PostgreSQL service needed

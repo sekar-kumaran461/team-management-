@@ -1,29 +1,51 @@
-# COMPLETE REQUIREMENTS FOR DJANGO TEAM MANAGEMENT APPLICATION
-# All packages needed for full functionality
+# Production Requirements for Django Team Management Application
+# Optimized for Render deployment with Supabase and Google Drive
 
-# Core Django Framework
+# =====================================
+# CORE DJANGO FRAMEWORK
+# =====================================
 Django==4.2.7
 gunicorn==20.1.0
 whitenoise==6.5.0
 python-decouple==3.8
 
-# Database Support
+# =====================================
+# DATABASE SUPPORT
+# =====================================
 psycopg2-binary==2.9.6
 dj-database-url==2.1.0
 
-# Authentication & APIs
+# =====================================
+# AUTHENTICATION & APIs
+# =====================================
 django-allauth==0.54.0
 djangorestframework==3.14.0
 django-cors-headers==4.3.1
 
-# Image Processing
+# =====================================
+# FILE HANDLING & MEDIA
+# =====================================
 Pillow==10.0.1
 
-# Data Processing
+# =====================================
+# GOOGLE INTEGRATION
+# =====================================
+google-api-python-client==2.84.0
+google-auth-httplib2==0.1.0
+google-auth-oauthlib==1.0.0
+google-auth==2.17.3
+gspread==5.9.0
+django-storages[google]==1.13.2
+
+# =====================================
+# DATA PROCESSING
+# =====================================
 pandas==2.0.3
 openpyxl==3.1.2
 
-# Google Integration (commented out for initial deployment)
-# google-api-python-client==2.84.0
-# google-auth-httplib2==0.1.0
-# google-auth-oauthlib==1.0.0
+# =====================================
+# UTILITIES
+# =====================================
+requests==2.31.0
+python-dateutil==2.8.2
+pytz==2023.3

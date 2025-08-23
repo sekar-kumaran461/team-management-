@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # =============================================================================
-# COMPREHENSIVE BUILD SCRIPT FOR DJANGO TEAM MANAGEMENT APPLICATION
-# Single-strategy approach with complete package installation
+# PRODUCTION BUILD SCRIPT FOR RENDER DEPLOYMENT
+# Single file optimized for Supabase + Google Drive integration
 # =============================================================================
 
 set -o errexit  # Exit on any error
 
-echo "🚀 Starting Django Team Management Build Process..."
+echo "🚀 Starting Production Build for Django Team Management..."
 echo "Build timestamp: $(date)"
 echo "Python version: $(python --version)"
 
@@ -21,152 +21,91 @@ echo "📁 Phase 1: Setting up environment..."
 mkdir -p logs media/submissions media/task_submissions static staticfiles
 chmod 755 logs media static staticfiles
 
+# Set proper permissions
+find . -name "*.sh" -exec chmod +x {} \;
+
 echo "✅ Environment setup completed"
 
 # =============================================================================
 # PHASE 2: PACKAGE INSTALLATION
 # =============================================================================
 
-echo "📦 Phase 2: Installing packages..."
+echo "📦 Phase 2: Installing Python packages..."
 
-# Upgrade pip and install build tools
-python -m pip install --upgrade pip setuptools wheel
+# Upgrade pip first
+python -m pip install --upgrade pip
 
-# Install packages with fallback strategy for problematic packages
-echo "📦 Installing core Django packages first..."
-pip install Django==4.2.7 gunicorn==20.1.0 whitenoise==6.5.0 python-decouple==3.8
+# Install requirements
+if [ -f "requirements-production.txt" ]; then
+    echo "Installing from requirements-production.txt..."
+    pip install -r requirements-production.txt
+elif [ -f "requirements.txt" ]; then
+    echo "Installing from requirements.txt..."
+    pip install -r requirements.txt
+else
+    echo "❌ No requirements file found!"
+    exit 1
+fi
 
-echo "📦 Installing database packages..."
-pip install psycopg2-binary==2.9.6 dj-database-url==2.1.0
+echo "✅ Python packages installed successfully"
 
-echo "📦 Installing authentication packages..."
-pip install django-allauth==0.54.0
+# =============================================================================
+# PHASE 3: NODE.JS AND CSS BUILD
+# =============================================================================
 
-echo "📦 Installing API packages..."
-pip install djangorestframework==3.14.0 django-cors-headers==4.3.1
+echo "🎨 Phase 3: Building CSS assets..."
 
-echo "📦 Installing image processing (with fallback)..."
-if ! pip install Pillow==10.0.1; then
-    echo "⚠️  Pillow 10.0.1 failed, trying 10.0.0..."
-    if ! pip install Pillow==10.0.0; then
-        echo "⚠️  Pillow 10.0.0 failed, trying 9.5.0..."
-        if ! pip install Pillow==9.5.0; then
-            echo "⚠️  Trying to install latest Pillow..."
-            pip install Pillow || echo "⚠️  Pillow installation failed, continuing without it"
-        fi
+# Check if Node.js build is needed
+if [ -f "package.json" ]; then
+    echo "Installing Node.js dependencies..."
+    npm install
+    
+    echo "Building Tailwind CSS..."
+    npm run build
+    
+    echo "✅ CSS build completed"
+else
+    echo "⚠️  No package.json found, using fallback CSS..."
+    # Use fallback CSS if available
+    if [ -f "static/css/fallback.css" ]; then
+        cp static/css/fallback.css static/css/output.css
+        echo "✅ Fallback CSS applied"
     fi
 fi
 
-echo "📦 Installing optional data processing packages..."
-pip install pandas==2.0.3 openpyxl==3.1.2 || echo "⚠️  Data processing packages failed, continuing without them"
-
-echo "📦 Installing optional Google integration packages..."
-pip install google-api-python-client==2.100.0 google-auth==2.23.0 google-auth-oauthlib==1.0.0 google-auth-httplib2==0.1.0 || echo "⚠️  Google API packages failed, continuing without them"
-
-echo "✅ Package installation completed"
-
 # =============================================================================
-# PHASE 3: PACKAGE VERIFICATION
+# PHASE 4: DJANGO SETUP
 # =============================================================================
 
-echo "🔍 Phase 3: Verifying critical packages..."
-
-# Verify critical packages
-python -c "
-critical_packages = [
-    'django', 'gunicorn', 'whitenoise', 'decouple', 
-    'psycopg2', 'allauth', 'rest_framework', 'corsheaders'
-]
-
-optional_packages = ['PIL', 'pandas', 'openpyxl', 'google']
-
-print('Checking critical packages:')
-missing_critical = []
-for pkg in critical_packages:
-    try:
-        __import__(pkg)
-        print(f'✅ {pkg} available')
-    except ImportError:
-        print(f'❌ {pkg} MISSING')
-        missing_critical.append(pkg)
-
-print('\\nChecking optional packages:')
-missing_optional = []
-for pkg in optional_packages:
-    try:
-        if pkg == 'PIL':
-            import PIL
-            print(f'✅ {pkg} available')
-        else:
-            __import__(pkg)
-            print(f'✅ {pkg} available')
-    except ImportError:
-        print(f'⚠️  {pkg} not available (optional)')
-        missing_optional.append(pkg)
-
-if missing_critical:
-    print(f'\\n❌ CRITICAL packages missing: {missing_critical}')
-    print('Attempting to install missing critical packages...')
-    import subprocess
-    for pkg in missing_critical:
-        if pkg == 'psycopg2':
-            subprocess.run(['pip', 'install', 'psycopg2-binary==2.9.6'])
-        elif pkg == 'allauth':
-            subprocess.run(['pip', 'install', 'django-allauth==0.54.0'])
-        elif pkg == 'rest_framework':
-            subprocess.run(['pip', 'install', 'djangorestframework==3.14.0'])
-        elif pkg == 'corsheaders':
-            subprocess.run(['pip', 'install', 'django-cors-headers==4.3.1'])
-        elif pkg == 'decouple':
-            subprocess.run(['pip', 'install', 'python-decouple==3.8'])
-        elif pkg == 'whitenoise':
-            subprocess.run(['pip', 'install', 'whitenoise==6.5.0'])
-        elif pkg == 'gunicorn':
-            subprocess.run(['pip', 'install', 'gunicorn==20.1.0'])
-        elif pkg == 'django':
-            subprocess.run(['pip', 'install', 'Django==4.2.7'])
-else:
-    print('\\n✅ All critical packages verified')
-
-if missing_optional:
-    print(f'ℹ️  Optional packages not available: {missing_optional}')
-    print('Application will run without these features')
-"
-
-echo "✅ Package verification completed"
-
-# =============================================================================
-# PHASE 4: DJANGO APPLICATION SETUP
-# =============================================================================
-
-echo "🎨 Phase 4: Setting up Django application..."
+echo "🐍 Phase 4: Django configuration..."
 
 # Collect static files
-echo "🎨 Collecting static files..."
-python manage.py collectstatic --noinput --clear
+echo "Collecting static files..."
+python manage.py collectstatic --noinput
 
-# Apply database migrations
-echo "🗄️  Applying database migrations..."
-python manage.py migrate
+echo "✅ Static files collected"
 
-# Create superuser if environment variables are set
-if [ -n "$DJANGO_SUPERUSER_USERNAME" ] && [ -n "$DJANGO_SUPERUSER_EMAIL" ] && [ -n "$DJANGO_SUPERUSER_PASSWORD" ]; then
-    echo "👤 Creating superuser..."
-    python manage.py createsuperuser --noinput --username "$DJANGO_SUPERUSER_USERNAME" --email "$DJANGO_SUPERUSER_EMAIL" || echo "⚠️  Superuser creation failed (might already exist)"
-fi
+# Run database migrations
+echo "Running database migrations..."
+python manage.py migrate --noinput
 
-echo "✅ Django application setup completed"
+echo "✅ Database migrations completed"
 
 # =============================================================================
-# BUILD COMPLETE
+# PHASE 5: VERIFICATION
 # =============================================================================
 
-echo ""
-echo "🎉 BUILD COMPLETED SUCCESSFULLY!"
-echo "=================================="
-echo "Build timestamp: $(date)"
-echo "All packages installed and verified"
-echo "Database migrations applied"
-echo "Static files collected"
-echo "🚀 Application is ready for deployment!"
-echo "=================================="
+echo "🔍 Phase 5: Verification..."
+
+# Check Django configuration
+python manage.py check --deploy
+
+echo "✅ Django deployment checks passed"
+
+# =============================================================================
+# BUILD COMPLETION
+# =============================================================================
+
+echo "🎉 Build completed successfully!"
+echo "Application is ready for deployment"
+echo "Build completed at: $(date)"

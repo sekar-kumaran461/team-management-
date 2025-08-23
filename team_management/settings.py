@@ -217,9 +217,46 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 # WhiteNoise configuration for static files
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Media files
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+# =============================================================================
+# MEDIA FILES CONFIGURATION (Google Drive Integration)
+# =============================================================================
+
+# Check if Google Drive should be used for media storage
+USE_GOOGLE_DRIVE = config('USE_GOOGLE_DRIVE', default=False, cast=bool)
+GOOGLE_DRIVE_FOLDER_ID = config('GOOGLE_DRIVE_FOLDER_ID', default=None)
+
+if USE_GOOGLE_DRIVE and GOOGLE_DRIVE_FOLDER_ID:
+    # Configure Google Drive as storage backend
+    try:
+        import storages
+        DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
+        GS_BUCKET_NAME = config('GOOGLE_CLOUD_STORAGE_BUCKET', default='team-management-media')
+        GS_PROJECT_ID = config('GOOGLE_CLOUD_PROJECT_ID', default='')
+        
+        # Use service account JSON for authentication
+        google_credentials = config('GOOGLE_SERVICE_ACCOUNT_JSON', default='')
+        if google_credentials:
+            import json
+            import tempfile
+            # Create temporary file for Google credentials
+            with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as f:
+                f.write(google_credentials)
+                GS_CREDENTIALS = f.name
+        
+        GS_DEFAULT_ACL = 'publicRead'
+        GS_QUERYSTRING_AUTH = False
+        
+        MEDIA_URL = f'https://storage.googleapis.com/{GS_BUCKET_NAME}/'
+        print("✅ Google Drive storage configured")
+        
+    except ImportError:
+        print("⚠️  django-storages not available, using local media storage")
+        MEDIA_URL = '/media/'
+        MEDIA_ROOT = BASE_DIR / 'media'
+else:
+    # Local media storage (default)
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -295,9 +332,10 @@ else:
     # Allow all origins in development
     CORS_ALLOW_ALL_ORIGINS = True
 
-# Google Drive API Settings
-GOOGLE_DRIVE_STORAGE_JSON_KEY_FILE = config('GOOGLE_DRIVE_STORAGE_JSON_KEY_FILE', default=None)
-GOOGLE_DRIVE_FOLDER_ID = config('GOOGLE_DRIVE_FOLDER_ID', default=None)
+# Google Drive API Settings (updated to remove deprecated references)
+GOOGLE_SERVICE_ACCOUNT_JSON = config('GOOGLE_SERVICE_ACCOUNT_JSON', default='')
+GOOGLE_DRIVE_FOLDER_ID = config('GOOGLE_DRIVE_FOLDER_ID', default='')
+GOOGLE_DATABASE_SPREADSHEET_ID = config('GOOGLE_DATABASE_SPREADSHEET_ID', default='')
 
 # Email Settings (for notifications)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Change for production
