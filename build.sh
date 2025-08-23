@@ -145,6 +145,15 @@ python manage.py migrate --noinput
 
 echo "✅ Database migrations completed"
 
+# Create superuser if environment variables are provided
+echo "Creating superuser (if configured)..."
+if [ -n "$DJANGO_SUPERUSER_EMAIL" ] && [ -n "$DJANGO_SUPERUSER_PASSWORD" ]; then
+    python manage.py create_superuser
+    echo "✅ Superuser creation attempted"
+else
+    echo "ℹ️  Superuser creation skipped (DJANGO_SUPERUSER_EMAIL and DJANGO_SUPERUSER_PASSWORD not set)"
+fi
+
 # =============================================================================
 # PHASE 5: VERIFICATION
 # =============================================================================
