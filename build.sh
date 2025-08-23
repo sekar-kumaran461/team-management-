@@ -35,13 +35,55 @@ echo "📦 Phase 2: Installing Python packages..."
 # Upgrade pip first
 python -m pip install --upgrade pip
 
-# Install requirements
-if [ -f "requirements.txt" ]; then
+# Install requirements with multiple fallback levels
+echo "Trying production requirements first..."
+if [ -f "requirements-production.txt" ]; then
+    echo "Installing from requirements-production.txt..."
+    pip install -r requirements-production.txt || {
+        echo "❌ Production requirements failed, trying standard requirements..."
+        if [ -f "requirements.txt" ]; then
+            pip install -r requirements.txt || {
+                echo "❌ Standard requirements failed, trying minimal requirements..."
+                if [ -f "requirements-minimal.txt" ]; then
+                    pip install -r requirements-minimal.txt || {
+                        echo "❌ Minimal requirements failed, trying core requirements..."
+                        if [ -f "requirements-core.txt" ]; then
+                            pip install -r requirements-core.txt || {
+                                echo "❌ All requirements failed"
+                                exit 1
+                            }
+                        else
+                            echo "❌ No core requirements available"
+                            exit 1
+                        fi
+                    }
+                else
+                    echo "❌ No minimal requirements available"
+                    exit 1
+                fi
+            }
+        else
+            echo "❌ No standard requirements available"
+            exit 1
+        fi
+    }
+elif [ -f "requirements.txt" ]; then
     echo "Installing from requirements.txt..."
     pip install -r requirements.txt || {
         echo "❌ Main requirements failed, trying minimal requirements..."
         if [ -f "requirements-minimal.txt" ]; then
-            pip install -r requirements-minimal.txt
+            pip install -r requirements-minimal.txt || {
+                echo "❌ Minimal requirements failed, trying core requirements..."
+                if [ -f "requirements-core.txt" ]; then
+                    pip install -r requirements-core.txt || {
+                        echo "❌ All requirements failed"
+                        exit 1
+                    }
+                else
+                    echo "❌ No core requirements available"
+                    exit 1
+                fi
+            }
         else
             echo "❌ No fallback requirements available"
             exit 1
@@ -49,7 +91,18 @@ if [ -f "requirements.txt" ]; then
     }
 elif [ -f "requirements-minimal.txt" ]; then
     echo "Installing from requirements-minimal.txt..."
-    pip install -r requirements-minimal.txt
+    pip install -r requirements-minimal.txt || {
+        echo "❌ Minimal requirements failed, trying core requirements..."
+        if [ -f "requirements-core.txt" ]; then
+            pip install -r requirements-core.txt
+        else
+            echo "❌ No core requirements available"
+            exit 1
+        fi
+    }
+elif [ -f "requirements-core.txt" ]; then
+    echo "Installing from requirements-core.txt..."
+    pip install -r requirements-core.txt
 else
     echo "❌ No requirements file found!"
     exit 1

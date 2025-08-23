@@ -1,0 +1,21 @@
+# =====================================
+# CORE REQUIREMENTS - NO IMAGE PROCESSING
+# Essential for basic Django functionality
+# =====================================
+
+# Core Django
+Django==4.2.16
+gunicorn==22.0.0
+whitenoise==6.7.0
+
+# Database
+psycopg2-binary==2.9.9
+dj-database-url==2.2.0
+
+# Authentication
+django-allauth==0.63.6
+
+# Basic utilities
+requests==2.32.3
+python-decouple==3.8
+pytz==2024.1

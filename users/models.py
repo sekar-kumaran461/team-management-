@@ -158,7 +158,7 @@ class User(AbstractUser):
     preferred_language = models.CharField(max_length=10, default='en')
     
     # Profile settings
-    profile_picture = models.ImageField(upload_to='profile_pictures/', blank=True, null=True)
+    # profile_picture = models.ImageField(upload_to='profile_pictures/', blank=True, null=True)  # Commented out for Pillow-free deployment
     is_profile_public = models.BooleanField(default=True)
     email_notifications = models.BooleanField(default=True)
     task_notifications = models.BooleanField(default=True)
