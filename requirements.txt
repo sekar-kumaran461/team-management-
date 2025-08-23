@@ -31,23 +31,22 @@ django-cors-headers==4.3.1
 Pillow==10.4.0
 
 # =====================================
-# GOOGLE INTEGRATION
+# GOOGLE INTEGRATION & FREE DRIVE API
 # =====================================
 google-api-python-client==2.108.0
 google-auth-httplib2==0.2.0
 google-auth-oauthlib==1.1.0
 google-auth==2.25.2
 gspread==5.12.0
-django-storages[google]==1.14.2
+# Note: django-storages and google-cloud-storage removed (paid services)
+# Using custom Google Drive API integration (FREE)
 
 # =====================================
-# DATA PROCESSING (OPTIONAL - for Excel support)
+# DATA PROCESSING (for Excel support)
 # =====================================
-# pandas==2.2.2  # Now added back for Python 3.11.10 compatibility
 numpy==1.26.4
 pandas==2.2.2
 openpyxl==3.1.5
-openpyxl==3.1.2
 
 # =====================================
 # UTILITIES

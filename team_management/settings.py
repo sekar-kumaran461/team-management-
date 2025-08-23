@@ -208,43 +208,58 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # =============================================================================
-# MEDIA FILES CONFIGURATION (Google Drive Integration)
+# MEDIA FILES CONFIGURATION (Google Drive API Integration - FREE)
 # =============================================================================
 
-# Check if Google Drive should be used for media storage
+# Check if Google Drive API should be used for media storage
 USE_GOOGLE_DRIVE = config('USE_GOOGLE_DRIVE', default=False, cast=bool)
-GOOGLE_DRIVE_FOLDER_ID = config('GOOGLE_DRIVE_FOLDER_ID', default=None)
 
-if USE_GOOGLE_DRIVE and GOOGLE_DRIVE_FOLDER_ID:
-    # Configure Google Drive as storage backend
+if USE_GOOGLE_DRIVE:
+    # Configure Google Drive API as storage backend (FREE - 15GB)
     try:
-        import storages
-        DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
-        GS_BUCKET_NAME = config('GOOGLE_CLOUD_STORAGE_BUCKET', default='team-management-media')
-        GS_PROJECT_ID = config('GOOGLE_CLOUD_PROJECT_ID', default='')
+        # Google Drive API Configuration (FREE)
+        print("[INFO] Configuring Google Drive API storage (FREE - 15GB)")
         
-        # Use service account JSON for authentication
-        google_credentials = config('GOOGLE_SERVICE_ACCOUNT_JSON', default='')
-        if google_credentials:
-            import json
-            import tempfile
-            # Create temporary file for Google credentials
-            with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as f:
-                f.write(google_credentials)
-                GS_CREDENTIALS = f.name
+        # Get Google Drive API credentials
+        GOOGLE_DRIVE_CLIENT_ID = config('GOOGLE_DRIVE_CLIENT_ID', default='')
+        GOOGLE_DRIVE_CLIENT_SECRET = config('GOOGLE_DRIVE_CLIENT_SECRET', default='')
         
-        GS_DEFAULT_ACL = 'publicRead'
-        GS_QUERYSTRING_AUTH = False
-        
-        MEDIA_URL = f'https://storage.googleapis.com/{GS_BUCKET_NAME}/'
-        print("[SUCCESS] Google Drive storage configured")
-        
-    except ImportError:
-        print("[WARNING] django-storages not available, using local media storage")
+        if not GOOGLE_DRIVE_CLIENT_ID or not GOOGLE_DRIVE_CLIENT_SECRET:
+            print("[ERROR] Google Drive API credentials missing")
+            print("[REQUIRED] GOOGLE_DRIVE_CLIENT_ID and GOOGLE_DRIVE_CLIENT_SECRET")
+            print("[FALLBACK] Using local media storage")
+            MEDIA_URL = '/media/'
+            MEDIA_ROOT = BASE_DIR / 'media'
+        else:
+            # Configure Google Drive API settings
+            GOOGLE_DRIVE_FOLDER_ID = config('GOOGLE_DRIVE_FOLDER_ID', default='')
+            
+            # Custom storage backend for Google Drive
+            DEFAULT_FILE_STORAGE = 'google_integration.storage.GoogleDriveStorage'
+            
+            # Google Drive settings
+            GOOGLE_DRIVE_STORAGE_SETTINGS = {
+                'client_id': GOOGLE_DRIVE_CLIENT_ID,
+                'client_secret': GOOGLE_DRIVE_CLIENT_SECRET,
+                'folder_id': GOOGLE_DRIVE_FOLDER_ID,  # Optional: specific folder
+                'scope': ['https://www.googleapis.com/auth/drive.file'],
+            }
+            
+            # Media URL will be served through Django views
+            MEDIA_URL = '/media/'
+            MEDIA_ROOT = None  # Files stored in Google Drive, not locally
+            
+            print(f"[SUCCESS] Google Drive API storage configured")
+            print(f"[INFO] Files will be stored in Google Drive (15GB FREE)")
+            
+    except Exception as e:
+        print(f"[ERROR] Google Drive API setup failed: {e}")
+        print("[FALLBACK] Using local media storage")
         MEDIA_URL = '/media/'
         MEDIA_ROOT = BASE_DIR / 'media'
 else:
     # Local media storage (default)
+    print("[INFO] Using local media storage")
     MEDIA_URL = '/media/'
     MEDIA_ROOT = BASE_DIR / 'media'
 

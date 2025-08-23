@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}TeamLearn Management System{% endblock %}</title>
+    <title>{% block title %}VisionInnovateForge Management System{% endblock %}</title>
+    <link rel="icon" type="image/png" href="{% static 'images/logo.png' %}">
     {% load static %}
     <link href="{% static 'css/output.css' %}" rel="stylesheet">
                        
@@ -79,8 +80,9 @@
                 <div class="flex">
                     <!-- Logo -->
                     <div class="flex-shrink-0 flex items-center">
-                        <a href="{% url 'users:dashboard' %}" class="text-2xl font-bold gradient-text hover:scale-105 transition-transform duration-200">
-                            <i class="fas fa-users-gear mr-2"></i>TeamLearn
+                        <a href="{% url 'users:dashboard' %}" class="flex items-center text-2xl font-bold gradient-text hover:scale-105 transition-transform duration-200">
+                            <img src="{% static 'images/logo.png' %}" alt="VisionInnovateForge Logo" class="h-8 w-8 mr-2">
+                            VisionInnovateForge
                         </a>
                     </div>
                     
@@ -333,8 +335,9 @@
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <div class="col-span-1 md:col-span-2">
                     <div class="flex items-center mb-4">
-                        <span class="text-2xl font-bold gradient-text">
-                            <i class="fas fa-users-gear mr-2"></i>TeamLearn
+                        <span class="flex items-center text-2xl font-bold gradient-text">
+                            <img src="{% static 'images/logo.png' %}" alt="VisionInnovateForge Logo" class="h-8 w-8 mr-2">
+                            VisionInnovateForge
                         </span>
                     </div>
                     <p class="text-gray-600 text-sm mb-4">
@@ -378,7 +381,7 @@
             <div class="mt-8 pt-6 border-t border-gray-200">
                 <div class="flex items-center justify-between">
                     <div class="text-sm text-gray-500">
-                        © 2025 TeamLearn Management System. All rights reserved.
+                        © 2025 VisionInnovateForge Management System. All rights reserved.
                     </div>
                     <div class="text-sm text-gray-500">
                         Made with <i class="fas fa-heart text-red-500"></i> for learning excellence

@@ -6,7 +6,7 @@ app_name = 'tasks'
 
 urlpatterns = [
     path('admin/view-file/<int:submission_id>/', views.admin_view_file, name='admin-view-file'),
-    path('admin/view-file/<int:submission_id>/', views.admin_view_file, name='admin-view-file'),
+    path('view-file/<int:submission_id>/', views.view_submission_file, name='view-submission-file'),
     # Task management
     path('', views.TaskListView.as_view(), name='task-list'),
     path('<int:pk>/', views.TaskDetailView.as_view(), name='task-detail'),

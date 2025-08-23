@@ -376,6 +376,6 @@ class TaskRecurringSelectionAdmin(admin.ModelAdmin):
 
 
 # Custom admin site configuration
-admin.site.site_header = "TeamLearn Administration"
-admin.site.site_title = "TeamLearn Admin"
-admin.site.index_title = "Welcome to TeamLearn Administration"
+admin.site.site_header = "VisionInnovateForge Administration"
+admin.site.site_title = "VisionInnovateForge Admin"
+admin.site.index_title = "Welcome to VisionInnovateForge Administration"

@@ -1,33 +1,91 @@
 from django.contrib.admin.views.decorators import staff_member_required
-# Admin file preview view
-from django.http import Http404
+from django.http import Http404, HttpResponse, FileResponse
+from django.shortcuts import get_object_or_404, render
+from django.core.exceptions import PermissionDenied
+import os
+import mimetypes
+
 @staff_member_required
 def admin_view_file(request, submission_id):
+    """Serve submission file for admin viewing"""
     submission = get_object_or_404(TaskSubmission, id=submission_id)
-    if not submission.file_path:
+    
+    if not submission.file:
         raise Http404("No file uploaded for this submission.")
+    
     # Only allow admin access
     if not request.user.is_staff and not getattr(request.user, 'is_admin', False):
         raise PermissionDenied()
-    from django.conf import settings
-    return render(request, 'admin/view_file.html', {
-        'submission': submission,
-        'MEDIA_URL': settings.MEDIA_URL,
-    })
-# Admin file preview view
-from django.http import Http404
-@staff_member_required
-def admin_view_file(request, submission_id):
+    
+    try:
+        # For production, serve the file directly
+        file_path = submission.file.path
+        
+        if not os.path.exists(file_path):
+            raise Http404("File not found on server.")
+        
+        # Determine content type
+        content_type, _ = mimetypes.guess_type(file_path)
+        if content_type is None:
+            content_type = 'application/octet-stream'
+        
+        # Return file response
+        response = FileResponse(
+            open(file_path, 'rb'),
+            content_type=content_type,
+            filename=os.path.basename(file_path)
+        )
+        
+        return response
+        
+    except Exception as e:
+        # Fallback: serve via template with file URL
+        from django.conf import settings
+        return render(request, 'admin/view_file.html', {
+            'submission': submission,
+            'file_url': submission.file.url if submission.file else None,
+            'MEDIA_URL': settings.MEDIA_URL,
+            'error': str(e)
+        })
+
+
+@login_required
+def view_submission_file(request, submission_id):
+    """Serve submission file for user viewing"""
     submission = get_object_or_404(TaskSubmission, id=submission_id)
-    if not submission.file_path:
+    
+    # Check if user can access this submission
+    if not (submission.submitted_by == request.user or 
+            request.user.is_staff or 
+            request.user == submission.task.created_by):
+        raise PermissionDenied("You don't have permission to view this file.")
+    
+    if not submission.file:
         raise Http404("No file uploaded for this submission.")
-    # Only allow admin access
-    if not request.user.is_staff and not getattr(request.user, 'is_admin', False):
-        raise PermissionDenied()
-    return render(request, 'admin/view_file.html', {
-        'submission': submission,
-        'file_url': submission.file_path,
-    })
+    
+    try:
+        # For production, serve the file directly
+        file_path = submission.file.path
+        
+        if not os.path.exists(file_path):
+            raise Http404("File not found on server.")
+        
+        # Determine content type
+        content_type, _ = mimetypes.guess_type(file_path)
+        if content_type is None:
+            content_type = 'application/octet-stream'
+        
+        # Return file response
+        response = FileResponse(
+            open(file_path, 'rb'),
+            content_type=content_type,
+            filename=os.path.basename(file_path)
+        )
+        
+        return response
+        
+    except Exception as e:
+        raise Http404(f"Error serving file: {str(e)}")
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.paginator import Paginator
 from users.models import User
