@@ -1,5 +1,5 @@
 # =====================================
-# CORE REQUIREMENTS - NO IMAGE PROCESSING
+# CORE REQUIREMENTS - PYTHON 3.13 COMPATIBLE
 # Essential for basic Django functionality
 # =====================================
 
@@ -8,8 +8,8 @@ Django==4.2.16
 gunicorn==22.0.0
 whitenoise==6.7.0
 
-# Database
-psycopg2-binary==2.9.9
+# Database - Python 3.13 compatible
+psycopg==3.2.3
 dj-database-url==2.2.0
 
 # Authentication
