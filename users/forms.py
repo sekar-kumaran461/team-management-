@@ -28,7 +28,7 @@ class UserProfileForm(forms.ModelForm):
     class Meta:
         model = User
         fields = [
-            'first_name', 'last_name', 'email', 'phone_number', 'bio', 'profile_picture'
+            'first_name', 'last_name', 'email', 'phone_number', 'bio'
         ]
         widgets = {
             'first_name': forms.TextInput(attrs={
@@ -51,10 +51,6 @@ class UserProfileForm(forms.ModelForm):
                 'class': 'form-textarea w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500',
                 'placeholder': 'Tell us about yourself...',
                 'rows': 4
-            }),
-            'profile_picture': forms.FileInput(attrs={
-                'class': 'form-input w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500',
-                'accept': 'image/*'
             })
         }
 
